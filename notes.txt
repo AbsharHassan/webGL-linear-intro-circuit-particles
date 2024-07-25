@@ -1,0 +1,49 @@
+maybe have a zoomed in version of linear's own circuit diagram and then zoom out when the particles are travelling outwards
+
+https://www.youtube.com/watch?v=PmtFtWVrxFE&t=690s
+
+CAN HAVE WRITNG ON THE BOARD ITSELF, LIKE HOW THE RESISTORS ETC ARE MARKED
+
+
+intro gradient:
+ maybe use sin cosine in the fragment shader to make the closing thing in the 'portal' when the mouse stops moving
+
+use fresnal shader to get the edges and then apply chromatic abberation (https://www.youtube.com/watch?v=sPBb-0al7Y0 at 34:30)
+
+IMPORTANT: for the noise consider having the circle rings in the career's section. They will originate from the center where the Linear Logo will be and can move slowly like waves like this: https://www.shadertoy.com/view/WscyDn
+
+consider using curl noise for the lines, could be some sort of vispy texture, idk
+
+maybe add the metallic liquid texture (v11) as some later stage with a corny caption like "streamline terbulent workflows"
+
+consider adding some small displacement in the doubleBufferTexture, to get an effect like lusion.co smears
+
+the 'burn' gradient should be based on some color scheme from linear, like purple-ish. Should ideally be a gradient itself
+
+MAYBE CHANGE THE PLANE TO A SPHERE AND USE THE INSIDE SURFACE, OR PERHAPS DISTORT THE PLANE IN THE VERTEX SHADER, LIKE HOW MONOPO DID IT!!!!!!!!!!
+
+OTHER STUFF:
+maybe add a wormhole thing somewhere in the main sequence
+
+maybe make the ending and intro thing looped, i.e an ending scene that transforms into the starting scene seamlessly
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+IDEA: 
+GO BACK TO THE NOISE GENERATION (THE LIQUID METAL STUFF) AND SEE WHERE YOU GENERATED THE NOISE WHICH LOOKED LIKE BASEWARP FBM AND UPLOAD IT SOMEHWERE AS A CHEAPER MOCK-BASEWARPFBM NOISE
