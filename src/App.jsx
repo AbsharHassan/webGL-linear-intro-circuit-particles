@@ -9,6 +9,7 @@ import DoubleBufferScene from './Components/DoubleBufferScene'
 import WaveSceneDoubleBuffer from './Components/WaveSceneDoubleBuffer'
 import CircuitScene from './Components/CircuitScene'
 import TestFadePlane from './Components/TestFadePlane'
+import CircuitParticlesScene from './Components/CircuitParticlesScene'
 
 function App() {
   let mousePosition = useRef({ x: 0, y: 0 })
@@ -37,8 +38,8 @@ function App() {
         height: '100vh',
       }}
       camera={{
-        // position: [0, 0, 1],
-        position: [0, 0, 10],
+        position: [0, 0, 1],
+        // position: [0, 0, 10],
         // fov: 100,
         // fov: 20,
       }}
@@ -55,9 +56,10 @@ function App() {
       /> */}
       {/* <OrthographicCamera makeDefault />
       <OrbitControls /> */}
-      <WaveSceneDoubleBuffer mousePosition={mousePosition} />
+      {/* <WaveSceneDoubleBuffer mousePosition={mousePosition} /> */}
       {/* <CircuitScene /> */}
       {/* <TestFadePlane /> */}
+      <CircuitParticlesScene />
     </Canvas>
   )
 }
