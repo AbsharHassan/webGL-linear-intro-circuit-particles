@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { extend, useFrame, useThree } from '@react-three/fiber'
 import {
   Circle,
   Line,
@@ -9,22 +10,12 @@ import {
   Sphere,
   shaderMaterial,
 } from '@react-three/drei'
-import { extend, useFrame, useThree } from '@react-three/fiber'
+import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import gsap from 'gsap'
-import alea from 'alea'
-import { createNoise2D } from 'simplex-noise'
-import { createNoise3D } from 'simplex-noise'
 
 import { circuitVertices } from '../circuitVertices'
 
-import addSphere from '../helpers/addSphere'
-
 import { degToRad } from 'three/src/math/MathUtils.js'
-import getRandomFloat from '../helpers/getRandomFloat'
-import getRandomInt from '../helpers/getRandomInt'
-import MouseReveal from './MouseReveal'
-import CurveTexture from './CurveTexture'
-import RevealPlane from './RevealPlane'
 
 const heightSegments = 64
 const widthSegments = 64
@@ -37,18 +28,19 @@ const yGap = gridHeight / heightSegments
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
 
-const snapMouseToGrid = (point) => {
-  let Nx = Math.round(point.x / xGap)
-  let Ny = Math.round(point.y / yGap)
-  let snappedPoint = { x: Nx * xGap, y: Ny * yGap }
-
-  // return { x: Nx * xGap, y: Ny * yGap }
-  return vec.set(snappedPoint.x, snappedPoint.y, 0)
-}
-
 const lineMaterial = new THREE.LineBasicMaterial({
   color: 0xff0000,
   // blending: THREE.AdditiveBlending,
+})
+
+const meshLineMat = new MeshLineMaterial({
+  lineWidth: 0.0025,
+  color: 'red',
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+  // blending: THREE.,
+  clipIntersection: true,
 })
 
 const CircuitParticlesScene = () => {
@@ -59,36 +51,49 @@ const CircuitParticlesScene = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    const circuitLines = []
-
     // circuitVertices.forEach((innerArray) => {
     //   innerArray.forEach((obj) => {
     //     obj.x *= 2
     //   })
     // })
 
+    const circuitLinesGeos = []
+    const circuitLinesMeshes = []
+
     circuitVertices.map((linePoints, index) => {
-      circuitLines.push(addLines(linePoints))
+      const meshLineGeo = new MeshLineGeometry()
 
-      // const { x, y, z } = linePoints[linePoints.length - 1]
-      const { x, y, z } = linePoints[0]
+      const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
 
-      dummyObj3D.position.set(x, y, z)
-      dummyObj3D.updateMatrix()
-      iMeshRef.current.setMatrixAt(index, dummyObj3D.matrix)
+      meshLineGeo.setPoints(points)
+
+      circuitLinesGeos.push(meshLineGeo)
+
+      const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+      scene.add(mesh)
+
+      circuitLinesMeshes.push(mesh)
     })
-
-    iMeshRef.current.instanceMatrix.needsUpdate = true
-
-    console.log(iMeshRef.current)
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
-      if (circuitLines) {
-        circuitLines.forEach((line) => {
+      // if (circuitLines) {
+      //   circuitLines.forEach((line) => {
+      //     scene.remove(line)
+      //   })
+      // }
+
+      if (circuitLinesMeshes) {
+        circuitLinesMeshes.forEach((line) => {
           scene.remove(line)
+        })
+      }
+
+      if (circuitLinesGeos) {
+        circuitLinesGeos.forEach((geometry) => {
+          geometry.dispose()
         })
       }
     }
@@ -121,13 +126,13 @@ const CircuitParticlesScene = () => {
         />
       </Plane>
 
-      <instancedMesh
+      {/* <instancedMesh
         ref={iMeshRef}
         args={[null, null, 467]}
       >
         <boxGeometry args={[0.05 * 0.2, 0.05 * 0.2, 0]} />
         <meshBasicMaterial />
-      </instancedMesh>
+      </instancedMesh> */}
     </>
   )
 }
