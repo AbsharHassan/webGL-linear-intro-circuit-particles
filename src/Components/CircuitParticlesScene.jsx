@@ -85,6 +85,13 @@ const CircuitParticlesScene = () => {
       // })
       // circuitLinesMats.push(meshLineMat)
 
+      // const { x, y, z } = linePoints[linePoints.length - 1]
+      // const { x, y, z } = linePoints[0]
+
+      // dummyObj3D.position.set(x, y, z)
+      // dummyObj3D.updateMatrix()
+      // iMeshRef.current.setMatrixAt(index, dummyObj3D.matrix)
+
       const meshLineGeo = new MeshLineGeometry()
       const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
       meshLineGeo.setPoints(points)
@@ -94,6 +101,8 @@ const CircuitParticlesScene = () => {
       scene.add(mesh)
       circuitLinesMeshes.push(mesh)
     })
+
+    iMeshRef.current.instanceMatrix.needsUpdate = true
 
     console.log(viewport.width - 0.2)
 
@@ -185,13 +194,13 @@ const CircuitParticlesScene = () => {
         />
       </Plane>
 
-      {/* <instancedMesh
+      <instancedMesh
         ref={iMeshRef}
         args={[null, null, 467]}
       >
         <boxGeometry args={[0.05 * 0.2, 0.05 * 0.2, 0]} />
         <meshBasicMaterial />
-      </instancedMesh> */}
+      </instancedMesh>
     </>
   )
 }
