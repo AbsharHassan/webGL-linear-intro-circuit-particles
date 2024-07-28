@@ -32,11 +32,6 @@ const yGap = gridHeight / heightSegments
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
 
-const lineMaterial = new THREE.LineBasicMaterial({
-  color: 0xff0000,
-  // blending: THREE.AdditiveBlending,
-})
-
 const meshLineMat = new MeshLineMaterial({
   lineWidth: 0.0125,
   transparent: true,
@@ -86,11 +81,11 @@ const CircuitParticlesScene = () => {
       // circuitLinesMats.push(meshLineMat)
 
       // const { x, y, z } = linePoints[linePoints.length - 1]
-      // const { x, y, z } = linePoints[0]
+      const { x, y, z } = linePoints[0]
 
-      // dummyObj3D.position.set(x, y, z)
-      // dummyObj3D.updateMatrix()
-      // iMeshRef.current.setMatrixAt(index, dummyObj3D.matrix)
+      dummyObj3D.position.set(x, y, z)
+      dummyObj3D.updateMatrix()
+      iMeshRef.current.setMatrixAt(index, dummyObj3D.matrix)
 
       const meshLineGeo = new MeshLineGeometry()
       const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
@@ -98,7 +93,9 @@ const CircuitParticlesScene = () => {
       circuitLinesGeos.push(meshLineGeo)
 
       const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
-      scene.add(mesh)
+      if (index === 1) {
+        scene.add(mesh)
+      }
       circuitLinesMeshes.push(mesh)
     })
 
@@ -123,8 +120,9 @@ const CircuitParticlesScene = () => {
       value: 1.0,
       duration: 4,
       ease: 'sine.inOut',
+      // ease: 'power2.inOut',
       repeat: -1,
-      // yoyo: true,
+      yoyo: true,
       onUpdate: () => {
         // console.log(testPlaneRef.current.material.uniforms.uProgression)
       },
@@ -153,20 +151,6 @@ const CircuitParticlesScene = () => {
       }
     }
   }, [])
-
-  const addLines = (vertices) => {
-    let points = []
-
-    vertices.forEach((vertex) => {
-      points.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z))
-    })
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const line = new THREE.Line(geometry, lineMaterial)
-    scene.add(line)
-
-    return line
-  }
 
   return (
     <>
