@@ -21,6 +21,8 @@ import circuitLinesVertex from '../shaders/circuitLinesShaders/circuitLinesVerte
 
 import { degToRad } from 'three/src/math/MathUtils.js'
 
+const POINTS_PER_PATH = 40
+
 const heightSegments = 64
 const widthSegments = 64
 const gridWidth = 2
@@ -60,84 +62,90 @@ const CircuitParticlesScene = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    // circuitVertices.forEach((innerArray) => {
-    //   innerArray.forEach((obj) => {
-    //     obj.x *= 2
-    //   })
-    // })
-
     const circuitLinesGeos = []
     const circuitLinesMats = []
     const circuitLinesMeshes = []
 
-    circuitVertices.map((linePoints, index) => {
-      // const meshLineMat = new MeshLineMaterial({
-      //   lineWidth: 0.0125,
-      //   transparent: true,
-      //   depthTest: false,
-      //   depthWrite: false,
-      //   fragmentShader: circuitLinesFragment,
-      // })
-      // circuitLinesMats.push(meshLineMat)
+    let paths = []
 
-      // const { x, y, z } = linePoints[linePoints.length - 1]
-      const { x, y, z } = linePoints[0]
+    console.log(circuitVertices)
 
-      dummyObj3D.position.set(x, y, z)
-      dummyObj3D.updateMatrix()
-      iMeshRef.current.setMatrixAt(index, dummyObj3D.matrix)
+    paths = circuitVertices.map((pointsArray, index) => {
+      let vec2Array = pointsArray.map((point) => {
+        return new THREE.Vector2(point.x, point.y)
+      })
 
-      const meshLineGeo = new MeshLineGeometry()
-      const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
-      meshLineGeo.setPoints(points)
-      circuitLinesGeos.push(meshLineGeo)
+      const path = new THREE.Path(vec2Array)
 
-      const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
-      if (index === 1) {
-        scene.add(mesh)
-      }
-      circuitLinesMeshes.push(mesh)
+      return path
     })
+
+    let iMeshIndex = 0
+
+    paths.map((path) => {
+      const points = path.getSpacedPoints()
+
+      points.forEach((point) => {
+        const { x, y } = point
+
+        dummyObj3D.position.set(x, y, 0)
+        dummyObj3D.updateMatrix()
+        iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+        iMeshIndex++
+      })
+
+      iMeshRef.current.instanceMatrix.needsUpdate = true
+    })
+
+    // let pointArray = circuitVertices[0]
+
+    // let vec2Array = pointArray.map((point) => {
+    //   return new THREE.Vector2(point.x, point.y)
+    // })
+
+    // console.log(vec2Array)
+
+    // const path = new THREE.Path(vec2Array)
+
+    // const points = path.getSpacedPoints()
+
+    // console.log(points)
+
+    // let someIndex = 0
+
+    // circuitVertices.map((linePoints, index) => {
+    //   const path = new THREE.Path()
+
+    //   circuitLinesMats.push(meshLineMat)
+
+    //   linePoints.forEach((point) => {
+    //     const { x, y, z } = point
+
+    //     dummyObj3D.position.set(x, y, z)
+    //     dummyObj3D.updateMatrix()
+    //     iMeshRef.current.setMatrixAt(someIndex, dummyObj3D.matrix)
+    //     someIndex++
+    //   })
+
+    //   iMeshRef.current.instanceMatrix.needsUpdate = true
+
+    //   const meshLineGeo = new MeshLineGeometry()
+    //   const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
+    //   meshLineGeo.setPoints(points)
+    //   circuitLinesGeos.push(meshLineGeo)
+
+    //   const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+    //   // scene.add(mesh)
+
+    //   circuitLinesMeshes.push(mesh)
+    // })
 
     iMeshRef.current.instanceMatrix.needsUpdate = true
-
-    console.log(viewport.width - 0.2)
-
-    gsap.to(testPlaneRef.current.material.uniforms.uProgression, {
-      value: 1.0,
-      duration: 4,
-      ease: 'sine.inOut',
-      repeat: -1,
-      yoyo: true,
-      onUpdate: () => {
-        // console.log(testPlaneRef.current.material.uniforms.uProgression)
-      },
-    })
-
-    meshLineMat.uniforms.uProgression = { value: 0 }
-
-    gsap.to(meshLineMat.uniforms.uProgression, {
-      value: 1.0,
-      duration: 4,
-      ease: 'sine.inOut',
-      // ease: 'power2.inOut',
-      repeat: -1,
-      yoyo: true,
-      onUpdate: () => {
-        // console.log(testPlaneRef.current.material.uniforms.uProgression)
-      },
-    })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
-      // if (circuitLines) {
-      //   circuitLines.forEach((line) => {
-      //     scene.remove(line)
-      //   })
-      // }
-
       if (circuitLinesMeshes) {
         circuitLinesMeshes.forEach((line) => {
           scene.remove(line)
@@ -157,13 +165,16 @@ const CircuitParticlesScene = () => {
       <OrbitControls />
       <axesHelper />
 
-      {/* <Plane args={[gridWidth, gridHeight, widthSegments, heightSegments]}>
+      <Plane
+        args={[gridWidth, gridHeight, widthSegments, heightSegments]}
+        visible={false}
+      >
         <meshBasicMaterial
           wireframe
           transparent
-          opacity={0.1}
+          opacity={0.05}
         />
-      </Plane> */}
+      </Plane>
 
       <Plane
         visible={false}
@@ -180,9 +191,9 @@ const CircuitParticlesScene = () => {
 
       <instancedMesh
         ref={iMeshRef}
-        args={[null, null, 467]}
+        args={[null, null, 467 * POINTS_PER_PATH]}
       >
-        <boxGeometry args={[0.05 * 0.2, 0.05 * 0.2, 0]} />
+        <boxGeometry args={[0.05 * 0.05, 0.05 * 0.05, 0]} />
         <meshBasicMaterial />
       </instancedMesh>
     </>

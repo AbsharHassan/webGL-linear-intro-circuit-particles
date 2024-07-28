@@ -38,6 +38,8 @@ function App() {
         height: '100vh',
       }}
       camera={{
+        //change for prod
+        near: 0.0001,
         position: [0, 0, 1],
         // position: [0, 0, 10],
         // fov: 100,
