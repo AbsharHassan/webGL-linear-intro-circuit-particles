@@ -19,9 +19,12 @@ import circuitLinesFragmentTest from '../shaders/circuitLinesShaders/circuitLine
 import circuitLinesFragment from '../shaders/circuitLinesShaders/circuitLinesFragment.glsl'
 import circuitLinesVertex from '../shaders/circuitLinesShaders/circuitLinesVertex.glsl'
 
+import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuitParticlesFragment.glsl'
+import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
+
 import { degToRad } from 'three/src/math/MathUtils.js'
 
-const POINTS_PER_PATH = 40
+const POINTS_PER_PATH = 100
 
 const heightSegments = 64
 const widthSegments = 64
@@ -82,21 +85,55 @@ const CircuitParticlesScene = () => {
 
     let iMeshIndex = 0
 
-    paths.map((path) => {
-      const points = path.getSpacedPoints()
+    // paths.map((path) => {
+    //   const points = path.getSpacedPoints(POINTS_PER_PATH)
+
+    //   points.forEach((point) => {
+    //     const { x, y } = point
+
+    //     dummyObj3D.position.set(x, y, 0)
+    //     dummyObj3D.updateMatrix()
+    //     iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+
+    //     iMeshIndex++
+    //   })
+
+    //   iMeshRef.current.instanceMatrix.needsUpdate = true
+    // })
+
+    const pos = new Float32Array(467 * (POINTS_PER_PATH + 1) * 3)
+
+    let somePoints = []
+
+    somePoints = paths.map((path) => {
+      const points = path.getSpacedPoints(POINTS_PER_PATH)
 
       points.forEach((point) => {
         const { x, y } = point
 
-        dummyObj3D.position.set(x, y, 0)
-        dummyObj3D.updateMatrix()
-        iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+        pos.set([x, y, 0], iMeshIndex * 3)
+
         iMeshIndex++
       })
 
-      iMeshRef.current.instanceMatrix.needsUpdate = true
+      return points
+
+      // iMeshRef.current.instanceMatrix.needsUpdate = true
     })
 
+    console.log(somePoints)
+    console.log(pos)
+
+    iMeshRef.current.geometry.setAttribute(
+      'pos',
+      new THREE.InstancedBufferAttribute(pos, 3, false)
+    )
+
+    // iMeshRef.current.geometry.attributes.position.array = pos
+
+    // iMeshRef.current.geometry.attributes.position.needsUpdate = true
+
+    console.log(iMeshRef.current)
     // let pointArray = circuitVertices[0]
 
     // let vec2Array = pointArray.map((point) => {
@@ -140,7 +177,7 @@ const CircuitParticlesScene = () => {
     //   circuitLinesMeshes.push(mesh)
     // })
 
-    iMeshRef.current.instanceMatrix.needsUpdate = true
+    // iMeshRef.current.instanceMatrix.needsUpdate = true
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -191,10 +228,15 @@ const CircuitParticlesScene = () => {
 
       <instancedMesh
         ref={iMeshRef}
-        args={[null, null, 467 * POINTS_PER_PATH]}
+        args={[null, null, 467 * (POINTS_PER_PATH + 1)]}
+        // args={[null, null, 467]}
       >
         <boxGeometry args={[0.05 * 0.05, 0.05 * 0.05, 0]} />
-        <meshBasicMaterial />
+        {/* <meshBasicMaterial /> */}
+        <shaderMaterial
+          vertexShader={circuitParticlesVertex}
+          fragmentShader={circuitParticlesFragment}
+        />
       </instancedMesh>
     </>
   )
