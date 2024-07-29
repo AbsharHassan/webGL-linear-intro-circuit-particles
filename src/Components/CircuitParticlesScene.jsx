@@ -71,8 +71,6 @@ const CircuitParticlesScene = () => {
 
     let paths = []
 
-    console.log(circuitVertices)
-
     paths = circuitVertices.map((pointsArray, index) => {
       let vec2Array = pointsArray.map((point) => {
         return new THREE.Vector2(point.x, point.y)
@@ -85,99 +83,58 @@ const CircuitParticlesScene = () => {
 
     let iMeshIndex = 0
 
-    // paths.map((path) => {
-    //   const points = path.getSpacedPoints(POINTS_PER_PATH)
+    // const pos = new Float32Array(467 * (POINTS_PER_PATH + 1) * 3)
+    const pos = new Float32Array(467 * 3)
 
-    //   points.forEach((point) => {
-    //     const { x, y } = point
+    paths.map((path) => {
+      // const points = path.getSpacedPoints(POINTS_PER_PATH)
+      const singlePoint = path.getPointAt(0.5)
 
-    //     dummyObj3D.position.set(x, y, 0)
-    //     dummyObj3D.updateMatrix()
-    //     iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+      pos.set([singlePoint.x, singlePoint.y, 0], iMeshIndex * 3)
 
-    //     iMeshIndex++
-    //   })
+      iMeshIndex++
 
-    //   iMeshRef.current.instanceMatrix.needsUpdate = true
-    // })
+      // points.forEach((point) => {
+      //   const { x, y } = point
 
-    const pos = new Float32Array(467 * (POINTS_PER_PATH + 1) * 3)
+      //   pos.set([x, y, 0], iMeshIndex * 3)
 
-    let somePoints = []
-
-    somePoints = paths.map((path) => {
-      const points = path.getSpacedPoints(POINTS_PER_PATH)
-
-      points.forEach((point) => {
-        const { x, y } = point
-
-        pos.set([x, y, 0], iMeshIndex * 3)
-
-        iMeshIndex++
-      })
-
-      return points
-
-      // iMeshRef.current.instanceMatrix.needsUpdate = true
+      //   iMeshIndex++
+      // })
     })
 
-    console.log(somePoints)
-    console.log(pos)
+    console.log(iMeshIndex)
 
     iMeshRef.current.geometry.setAttribute(
       'pos',
       new THREE.InstancedBufferAttribute(pos, 3, false)
     )
 
-    // iMeshRef.current.geometry.attributes.position.array = pos
+    const obj = {
+      t: 0,
+    }
 
-    // iMeshRef.current.geometry.attributes.position.needsUpdate = true
+    gsap.to(obj, {
+      t: 1,
+      duration: 2,
+      ease: 'none',
+      repeat: -1,
+      yoyo: true,
+      onUpdate: () => {
+        let i = 0
 
-    console.log(iMeshRef.current)
-    // let pointArray = circuitVertices[0]
+        paths.map((path) => {
+          const singlePoint = path.getPointAt(obj.t)
 
-    // let vec2Array = pointArray.map((point) => {
-    //   return new THREE.Vector2(point.x, point.y)
-    // })
+          pos.set([singlePoint.x, singlePoint.y, 0], i * 3)
 
-    // console.log(vec2Array)
+          i++
+        })
 
-    // const path = new THREE.Path(vec2Array)
-
-    // const points = path.getSpacedPoints()
-
-    // console.log(points)
-
-    // let someIndex = 0
-
-    // circuitVertices.map((linePoints, index) => {
-    //   const path = new THREE.Path()
-
-    //   circuitLinesMats.push(meshLineMat)
-
-    //   linePoints.forEach((point) => {
-    //     const { x, y, z } = point
-
-    //     dummyObj3D.position.set(x, y, z)
-    //     dummyObj3D.updateMatrix()
-    //     iMeshRef.current.setMatrixAt(someIndex, dummyObj3D.matrix)
-    //     someIndex++
-    //   })
-
-    //   iMeshRef.current.instanceMatrix.needsUpdate = true
-
-    //   const meshLineGeo = new MeshLineGeometry()
-    //   const points = linePoints.map((obj) => [obj.x, obj.y, obj.z])
-    //   meshLineGeo.setPoints(points)
-    //   circuitLinesGeos.push(meshLineGeo)
-
-    //   const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
-    //   // scene.add(mesh)
-
-    //   circuitLinesMeshes.push(mesh)
-    // })
-
-    // iMeshRef.current.instanceMatrix.needsUpdate = true
+        iMeshRef.current.geometry.attributes.pos.array = pos
+        iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+      },
+    })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
