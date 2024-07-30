@@ -54,7 +54,7 @@ const CircuitParticlesScene = () => {
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
 
-  const [paths, setPaths] = useState([])
+  const [paths, setPaths] = useState({})
 
   const posFloat32 = useMemo(
     () => new Float32Array(467 * (POINTS_PER_PATH + 1) * 3),
@@ -85,8 +85,8 @@ const CircuitParticlesScene = () => {
       vertices.reverse()
       let vec2Array = vertices.map((point) => {
         return new THREE.Vector2(
-          point.x + Math.random() * 0.1,
-          point.y + Math.random() * 0.1
+          point.x + Math.random() * 0.0,
+          point.y + Math.random() * 0.0
         )
       })
 
@@ -100,7 +100,7 @@ const CircuitParticlesScene = () => {
       }
     })
 
-    setPaths(tempPaths)
+    setPaths({ paths: tempPaths, count: 1 })
 
     iMeshRef.current.geometry.setAttribute(
       'pos',
@@ -151,8 +151,12 @@ const CircuitParticlesScene = () => {
     }
   }, [])
 
+  useEffect(() => {
+    console.log(paths)
+  }, [paths])
+
   useFrame(() => {
-    if (!paths.length) {
+    if (!paths?.paths.length) {
       return
     }
 
@@ -161,12 +165,16 @@ const CircuitParticlesScene = () => {
     if (someRandomCount % 3 === 0) {
       let j = 0
 
-      paths.forEach((path) => {
+      paths.count += 1
+
+      paths.count = paths.count % POINTS_PER_PATH
+
+      paths.paths.forEach((path) => {
         path.currentIndex += 1
 
         path.currentIndex = path.currentIndex % path.pointsArray.length
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < paths.count; i++) {
           let index = (path.currentIndex + i) % path.pointsArray.length
 
           let point = path.pointsArray[index]
