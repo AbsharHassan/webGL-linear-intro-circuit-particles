@@ -24,7 +24,8 @@ import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitPa
 
 import { degToRad } from 'three/src/math/MathUtils.js'
 
-const POINTS_PER_PATH = 100
+// const POINTS_PER_PATH = 100
+const POINTS_PER_PATH = 20
 
 const heightSegments = 64
 const widthSegments = 64
@@ -51,6 +52,13 @@ const CircuitParticlesScene = () => {
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
 
+  const [paths, setPaths] = useState([])
+
+  const posFloat32 = useMemo(
+    () => new Float32Array(467 * (POINTS_PER_PATH + 1) * 3),
+    []
+  )
+
   const uniforms = useMemo(() => {
     return {
       uResolution: {
@@ -69,72 +77,55 @@ const CircuitParticlesScene = () => {
     const circuitLinesMats = []
     const circuitLinesMeshes = []
 
-    let paths = []
+    let tempPaths = []
 
-    paths = circuitVertices.map((pointsArray, index) => {
-      let vec2Array = pointsArray.map((point) => {
+    tempPaths = circuitVertices.map((vertices, index) => {
+      let vec2Array = vertices.map((point) => {
         return new THREE.Vector2(point.x, point.y)
       })
 
       const path = new THREE.Path(vec2Array)
 
-      return path
+      const pointsArray = path.getSpacedPoints(POINTS_PER_PATH)
+
+      return {
+        pointsArray,
+        currentIndex: 0,
+      }
     })
 
-    let iMeshIndex = 0
-
-    // const pos = new Float32Array(467 * (POINTS_PER_PATH + 1) * 3)
-    const pos = new Float32Array(467 * 3)
-
-    paths.map((path) => {
-      // const points = path.getSpacedPoints(POINTS_PER_PATH)
-      const singlePoint = path.getPointAt(0.5)
-
-      pos.set([singlePoint.x, singlePoint.y, 0], iMeshIndex * 3)
-
-      iMeshIndex++
-
-      // points.forEach((point) => {
-      //   const { x, y } = point
-
-      //   pos.set([x, y, 0], iMeshIndex * 3)
-
-      //   iMeshIndex++
-      // })
-    })
-
-    console.log(iMeshIndex)
+    setPaths(tempPaths)
 
     iMeshRef.current.geometry.setAttribute(
       'pos',
-      new THREE.InstancedBufferAttribute(pos, 3, false)
+      new THREE.InstancedBufferAttribute(posFloat32, 3, false)
     )
 
     const obj = {
       t: 0,
     }
 
-    gsap.to(obj, {
-      t: 1,
-      duration: 2,
-      ease: 'none',
-      repeat: -1,
-      yoyo: true,
-      onUpdate: () => {
-        let i = 0
+    // gsap.to(obj, {
+    //   t: 1,
+    //   duration: 2,
+    //   ease: 'none',
+    //   repeat: -1,
+    //   yoyo: true,
+    //   onUpdate: () => {
+    //     let i = 0
 
-        paths.map((path) => {
-          const singlePoint = path.getPointAt(obj.t)
+    //     paths.map((path) => {
+    //       const singlePoint = path.getPointAt(obj.t)
 
-          pos.set([singlePoint.x, singlePoint.y, 0], i * 3)
+    //       pos.set([singlePoint.x, singlePoint.y, 0], i * 3)
 
-          i++
-        })
+    //       i++
+    //     })
 
-        iMeshRef.current.geometry.attributes.pos.array = pos
-        iMeshRef.current.geometry.attributes.pos.needsUpdate = true
-      },
-    })
+    //     iMeshRef.current.geometry.attributes.pos.array = pos
+    //     iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+    //   },
+    // })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -153,6 +144,37 @@ const CircuitParticlesScene = () => {
       }
     }
   }, [])
+
+  useEffect(() => {
+    console.log(paths)
+  }, [paths])
+
+  useFrame(() => {
+    if (!paths.length) {
+      return
+    }
+
+    let j = 0
+
+    paths.forEach((path) => {
+      path.currentIndex += 1
+
+      path.currentIndex = path.currentIndex % path.pointsArray.length
+
+      for (let i = 0; i < 5; i++) {
+        let index = (path.currentIndex + i) % path.pointsArray.length
+
+        let point = path.pointsArray[index]
+
+        posFloat32.set([point.x, point.y, 0], j * 3)
+
+        j++
+      }
+    })
+
+    iMeshRef.current.geometry.attributes.pos.array = posFloat32
+    iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+  })
 
   return (
     <>
