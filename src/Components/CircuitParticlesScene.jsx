@@ -84,7 +84,10 @@ const CircuitParticlesScene = () => {
     tempPaths = circuitVertices.map((vertices, index) => {
       vertices.reverse()
       let vec2Array = vertices.map((point) => {
-        return new THREE.Vector2(point.x, point.y)
+        return new THREE.Vector2(
+          point.x + Math.random() * 0.1,
+          point.y + Math.random() * 0.1
+        )
       })
 
       const path = new THREE.Path(vec2Array)
