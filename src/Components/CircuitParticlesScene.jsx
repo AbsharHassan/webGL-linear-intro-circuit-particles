@@ -25,7 +25,7 @@ import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitPa
 import { degToRad } from 'three/src/math/MathUtils.js'
 
 // const POINTS_PER_PATH = 100
-const POINTS_PER_PATH = 20
+const POINTS_PER_PATH = 100
 
 const heightSegments = 64
 const widthSegments = 64
@@ -45,6 +45,8 @@ const meshLineMat = new MeshLineMaterial({
   depthWrite: false,
   fragmentShader: circuitLinesFragment,
 })
+
+let someRandomCount = 0
 
 const CircuitParticlesScene = () => {
   const { scene, viewport } = useThree()
@@ -80,6 +82,7 @@ const CircuitParticlesScene = () => {
     let tempPaths = []
 
     tempPaths = circuitVertices.map((vertices, index) => {
+      vertices.reverse()
       let vec2Array = vertices.map((point) => {
         return new THREE.Vector2(point.x, point.y)
       })
@@ -145,35 +148,35 @@ const CircuitParticlesScene = () => {
     }
   }, [])
 
-  useEffect(() => {
-    console.log(paths)
-  }, [paths])
-
   useFrame(() => {
     if (!paths.length) {
       return
     }
 
-    let j = 0
+    someRandomCount++
 
-    paths.forEach((path) => {
-      path.currentIndex += 1
+    if (someRandomCount % 3 === 0) {
+      let j = 0
 
-      path.currentIndex = path.currentIndex % path.pointsArray.length
+      paths.forEach((path) => {
+        path.currentIndex += 1
 
-      for (let i = 0; i < 5; i++) {
-        let index = (path.currentIndex + i) % path.pointsArray.length
+        path.currentIndex = path.currentIndex % path.pointsArray.length
 
-        let point = path.pointsArray[index]
+        for (let i = 0; i < 20; i++) {
+          let index = (path.currentIndex + i) % path.pointsArray.length
 
-        posFloat32.set([point.x, point.y, 0], j * 3)
+          let point = path.pointsArray[index]
 
-        j++
-      }
-    })
+          posFloat32.set([point.x, point.y, 0], j * 3)
 
-    iMeshRef.current.geometry.attributes.pos.array = posFloat32
-    iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+          j++
+        }
+      })
+
+      iMeshRef.current.geometry.attributes.pos.array = posFloat32
+      iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+    }
   })
 
   return (
