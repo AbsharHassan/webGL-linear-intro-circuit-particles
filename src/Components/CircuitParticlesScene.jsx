@@ -54,7 +54,7 @@ const CircuitParticlesScene = () => {
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
 
-  const [paths, setPaths] = useState({})
+  const [paths, setPaths] = useState(null)
 
   const posFloat32 = useMemo(
     () => new Float32Array(467 * (POINTS_PER_PATH + 1) * 3),
@@ -152,43 +152,89 @@ const CircuitParticlesScene = () => {
   }, [])
 
   useEffect(() => {
-    console.log(paths)
-  }, [paths])
-
-  useFrame(() => {
-    if (!paths?.paths.length) {
+    if (!paths) {
       return
     }
 
-    someRandomCount++
-
-    if (someRandomCount % 3 === 0) {
-      let j = 0
-
-      paths.count += 1
-
-      paths.count = paths.count % POINTS_PER_PATH
-
-      paths.paths.forEach((path) => {
-        path.currentIndex += 1
-
-        path.currentIndex = path.currentIndex % path.pointsArray.length
-
-        for (let i = 0; i < paths.count; i++) {
-          let index = (path.currentIndex + i) % path.pointsArray.length
-
-          let point = path.pointsArray[index]
-
-          posFloat32.set([point.x, point.y, 0], j * 3)
-
-          j++
-        }
-      })
-
-      iMeshRef.current.geometry.attributes.pos.array = posFloat32
-      iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+    const newAttempt = {
+      val: 0,
     }
-  })
+
+    gsap.to(newAttempt, {
+      val: POINTS_PER_PATH + 1,
+      duration: 10,
+      ease: 'steps(101)',
+      // ease: 'none',
+      onUpdate: () => {
+        // if (obj.t === 2) {
+        //   console.log('yea')
+        // }
+        // console.log(Math.floor(newAttempt.val))
+        // console.log(obj.t * 10)
+        console.log(newAttempt.val)
+
+        let j = 0
+
+        paths.paths.forEach((path) => {
+          path.currentIndex += 1
+
+          path.currentIndex = path.currentIndex % path.pointsArray.length
+
+          for (let i = 0; i < newAttempt.val; i++) {
+            let index = (path.currentIndex + i) % path.pointsArray.length
+
+            let point = path.pointsArray[index]
+
+            posFloat32.set([point.x, point.y, 0], j * 3)
+
+            j++
+          }
+        })
+
+        // console.log(j)
+
+        iMeshRef.current.geometry.attributes.pos.array = posFloat32
+        iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+      },
+    })
+  }, [paths])
+
+  // useFrame(() => {
+  //   if (!paths?.paths.length) {
+  //     return
+  //   }
+
+  //   someRandomCount++
+
+  //   if (someRandomCount % 3 === 0) {
+  //     let j = 0
+
+  //     paths.count += 1
+
+  //     paths.count = (paths.count % POINTS_PER_PATH) + 1
+
+  //     paths.paths.forEach((path) => {
+  //       path.currentIndex += 1
+
+  //       path.currentIndex = path.currentIndex % path.pointsArray.length
+
+  //       for (let i = 0; i < paths.count; i++) {
+  //         let index = (path.currentIndex + i) % path.pointsArray.length
+
+  //         let point = path.pointsArray[index]
+
+  //         posFloat32.set([point.x, point.y, 0], j * 3)
+
+  //         j++
+  //       }
+  //     })
+
+  //     // console.log(j)
+
+  //     iMeshRef.current.geometry.attributes.pos.array = posFloat32
+  //     iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+  //   }
+  // })
 
   return (
     <>
