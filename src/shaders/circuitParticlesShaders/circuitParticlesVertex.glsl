@@ -21,7 +21,7 @@ void main() {
 
     vec4 view_pos = viewMatrix * vec4(particle_position, 1.0);
 
-    view_pos.xyz += position * 10.0;
+    view_pos.xyz += position * 5.0;
 
     gl_Position = projectionMatrix * view_pos;
 
