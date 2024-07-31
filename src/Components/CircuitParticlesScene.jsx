@@ -112,7 +112,7 @@ const CircuitParticlesScene = () => {
     let opacityArray = new Float32Array(count)
 
     for (let i = 0; i < opacityArray.length; i++) {
-      opacityArray[i] = Math.random() / 10
+      opacityArray[i] = Math.random() / 20
     }
 
     iMeshRef.current.geometry.setAttribute(
