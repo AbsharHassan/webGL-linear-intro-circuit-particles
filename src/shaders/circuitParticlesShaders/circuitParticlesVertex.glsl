@@ -1,10 +1,15 @@
 precision highp float;
 
 attribute vec3 pos;
+attribute float aOpacity;
+
+varying float vOpacity;
 varying vec2 vUv;
 
 void main() {
     vUv = uv;
+
+    vOpacity = aOpacity;
 
     // // vec3 newPosition = position + aPos;
 
@@ -16,7 +21,7 @@ void main() {
 
     vec4 view_pos = viewMatrix * vec4(particle_position, 1.0);
 
-    view_pos.xyz += position * 1.0;
+    view_pos.xyz += position * 10.0;
 
     gl_Position = projectionMatrix * view_pos;
 

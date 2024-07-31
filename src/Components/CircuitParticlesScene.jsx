@@ -49,7 +49,7 @@ const meshLineMat = new MeshLineMaterial({
 let someRandomCount = 0
 
 const CircuitParticlesScene = () => {
-  const { scene, viewport } = useThree()
+  const { scene, viewport, gl } = useThree()
 
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
@@ -85,8 +85,8 @@ const CircuitParticlesScene = () => {
       vertices.reverse()
       let vec2Array = vertices.map((point) => {
         return new THREE.Vector2(
-          point.x + Math.random() * 0.0,
-          point.y + Math.random() * 0.0
+          point.x + (Math.random() - 0.5) * 0.0,
+          point.y + (Math.random() - 0.5) * 0.0
         )
       })
 
@@ -105,6 +105,19 @@ const CircuitParticlesScene = () => {
     iMeshRef.current.geometry.setAttribute(
       'pos',
       new THREE.InstancedBufferAttribute(posFloat32, 3, false)
+    )
+
+    let count = 467 * (POINTS_PER_PATH + 1)
+
+    let opacityArray = new Float32Array(count)
+
+    for (let i = 0; i < opacityArray.length; i++) {
+      opacityArray[i] = Math.random() / 10
+    }
+
+    iMeshRef.current.geometry.setAttribute(
+      'aOpacity',
+      new THREE.InstancedBufferAttribute(opacityArray, 1, false)
     )
 
     const obj = {
@@ -160,10 +173,13 @@ const CircuitParticlesScene = () => {
       val: 0,
     }
 
+    let oldValue = 0
+
     gsap.to(newAttempt, {
-      val: POINTS_PER_PATH + 1,
-      duration: 10,
-      ease: 'steps(101)',
+      val: POINTS_PER_PATH,
+      duration: 2,
+      // ease: 'steps(100)',
+      ease: 'power1.in',
       // ease: 'none',
       onUpdate: () => {
         // if (obj.t === 2) {
@@ -171,30 +187,37 @@ const CircuitParticlesScene = () => {
         // }
         // console.log(Math.floor(newAttempt.val))
         // console.log(obj.t * 10)
-        console.log(newAttempt.val)
 
-        let j = 0
+        const progress = Math.floor(newAttempt.val)
 
-        paths.paths.forEach((path) => {
-          path.currentIndex += 1
+        console.log(Math.floor(progress))
 
-          path.currentIndex = path.currentIndex % path.pointsArray.length
+        if (progress !== oldValue) {
+          let j = 0
 
-          for (let i = 0; i < newAttempt.val; i++) {
-            let index = (path.currentIndex + i) % path.pointsArray.length
+          paths.paths.forEach((path) => {
+            path.currentIndex += 1
 
-            let point = path.pointsArray[index]
+            path.currentIndex = path.currentIndex % path.pointsArray.length
 
-            posFloat32.set([point.x, point.y, 0], j * 3)
+            for (let i = 0; i < Math.min(progress, POINTS_PER_PATH); i++) {
+              let index = (path.currentIndex + i) % path.pointsArray.length
 
-            j++
-          }
-        })
+              let point = path.pointsArray[index]
 
-        // console.log(j)
+              posFloat32.set([point.x, point.y, 0], j * 3)
 
-        iMeshRef.current.geometry.attributes.pos.array = posFloat32
-        iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+              j++
+            }
+          })
+
+          // console.log(j)
+
+          iMeshRef.current.geometry.attributes.pos.array = posFloat32
+          iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+
+          oldValue = progress
+        }
       },
     })
   }, [paths])
@@ -218,7 +241,7 @@ const CircuitParticlesScene = () => {
 
   //       path.currentIndex = path.currentIndex % path.pointsArray.length
 
-  //       for (let i = 0; i < paths.count; i++) {
+  //       for (let i = 0; i < 20; i++) {
   //         let index = (path.currentIndex + i) % path.pointsArray.length
 
   //         let point = path.pointsArray[index]
@@ -275,6 +298,10 @@ const CircuitParticlesScene = () => {
         <shaderMaterial
           vertexShader={circuitParticlesVertex}
           fragmentShader={circuitParticlesFragment}
+          transparent
+          depthTest={false}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
         />
       </instancedMesh>
     </>
