@@ -220,6 +220,29 @@ const CircuitParticlesScene = () => {
         }
       },
     })
+
+    let count = 467 * (POINTS_PER_PATH + 1)
+
+    let opacityArray = new Float32Array(count)
+
+    let someRandomThing = {
+      thing: 0,
+    }
+
+    // gsap.to(someRandomThing, {
+    //   thing: 1,
+    //   duration: 5,
+    //   yoyo: true,
+    //   repeat: -1,
+    //   onUpdate: () => {
+    //     for (let i = 0; i < opacityArray.length; i++) {
+    //       opacityArray[i] = Math.random() / 20
+    //     }
+
+    //     iMeshRef.current.geometry.attributes.aOpacity.array = opacityArray
+    //     iMeshRef.current.geometry.attributes.aOpacity.needsUpdate = true
+    //   },
+    // })
   }, [paths])
 
   // useFrame(() => {

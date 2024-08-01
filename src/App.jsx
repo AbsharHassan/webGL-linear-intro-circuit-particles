@@ -45,6 +45,11 @@ function App() {
         // fov: 100,
         // fov: 20,
       }}
+      gl={{
+        preserveDrawingBuffer: true,
+        alpha: true,
+        autoClear: false,
+      }}
     >
       <Stats />
       {/* <Scene /> */}
