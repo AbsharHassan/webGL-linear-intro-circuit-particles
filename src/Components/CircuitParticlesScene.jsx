@@ -243,6 +243,13 @@ const CircuitParticlesScene = () => {
     //     iMeshRef.current.geometry.attributes.aOpacity.needsUpdate = true
     //   },
     // })
+
+    setTimeout(() => {
+      gl.preserveDrawingBuffer = false
+      gl.autoClear = true
+
+      console.log(gl)
+    }, 10000)
   }, [paths])
 
   // useFrame(() => {
