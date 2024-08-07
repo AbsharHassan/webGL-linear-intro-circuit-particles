@@ -80,7 +80,7 @@ const CircuitShaderParticlesScene = () => {
 
       const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
 
-      scene.add(mesh)
+      //   scene.add(mesh)
       circuitLinesMeshes.push(mesh)
     })
 
@@ -129,7 +129,7 @@ const CircuitShaderParticlesScene = () => {
       </Plane>
 
       <Plane
-        visible={false}
+        // visible={false}
         ref={testPlaneRef}
         position={[0, 0, 0]}
         args={[viewport.width - 0.2, 0.25]}
@@ -138,6 +138,9 @@ const CircuitShaderParticlesScene = () => {
           vertexShader={circuitLinesVertex}
           fragmentShader={circuitLinesFragmentTest}
           uniforms={uniforms}
+          transparent
+          depthTest={false}
+          depthWrite={false}
         />
       </Plane>
 
