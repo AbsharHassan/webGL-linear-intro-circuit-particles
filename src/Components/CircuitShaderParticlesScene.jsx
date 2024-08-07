@@ -84,6 +84,16 @@ const CircuitShaderParticlesScene = () => {
       circuitLinesMeshes.push(mesh)
     })
 
+    meshLineMat.uniforms.uProgression = { value: 0 }
+
+    gsap.to(meshLineMat.uniforms.uProgression, {
+      value: 1,
+      duration: 2,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    })
+
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
