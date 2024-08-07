@@ -44,6 +44,15 @@ const meshLineMat = new MeshLineMaterial({
   fragmentShader: circuitLinesFragment,
 })
 
+const testMeshLineMat = new MeshLineMaterial({
+  lineWidth: 0.125,
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+  //   blending: THREE.AdditiveBlending,
+  fragmentShader: circuitLinesFragment,
+})
+
 const CircuitShaderParticlesScene = () => {
   const { scene, viewport, gl } = useThree()
 
@@ -61,6 +70,31 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [viewport])
 
+  const testPoints = useMemo(() => {
+    return [
+      [0.6875, 0.3984375, 0],
+      [0.6875, 0.375, 0],
+      [0.71875, 0.375, 0],
+      [0.71875, 0.3515625, 0],
+      [0.71875, 0.328125, 0],
+      [0.75, 0.328125, 0],
+      [0.75, 0.3046875, 0],
+      [0.75, 0.28125, 0],
+      [0.75, 0.2578125, 0],
+      [0.75, 0.234375, 0],
+      [0.75, 0.2109375, 0],
+      [0.75, 0.1875, 0],
+      [0.78125, 0.1875, 0],
+      [0.8125, 0.1875, 0],
+      [0.84375, 0.1875, 0],
+      [0.875, 0.1875, 0],
+      [0.90625, 0.1875, 0],
+      [0.9375, 0.1875, 0],
+      [0.96875, 0.1875, 0],
+      [1, 0.1875, 0],
+    ]
+  }, [])
+
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
@@ -73,26 +107,43 @@ const CircuitShaderParticlesScene = () => {
     circuitVertices.map((vertices, index) => {
       vertices.reverse()
 
-      const meshLineGeo = new MeshLineGeometry()
-      const points = vertices.map((obj) => [obj.x, obj.y, obj.z])
-      meshLineGeo.setPoints(points)
-      circuitLinesGeos.push(meshLineGeo)
+      //   if (index === 1) {
+      //     const meshLineGeo = new MeshLineGeometry()
+      //     const points = vertices.map((obj) => [obj.x, obj.y, obj.z])
 
-      const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+      //     console.log(points)
 
-      //   scene.add(mesh)
-      circuitLinesMeshes.push(mesh)
+      //     meshLineGeo.setPoints(points)
+      //     circuitLinesGeos.push(meshLineGeo)
+
+      //     const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+
+      //     scene.add(mesh)
+      //     circuitLinesMeshes.push(mesh)
+      //   }
     })
 
-    meshLineMat.uniforms.uProgression = { value: 0 }
+    console.log(viewport)
 
-    gsap.to(meshLineMat.uniforms.uProgression, {
-      value: 1,
-      duration: 2,
-      ease: 'sine.inOut',
-      yoyo: true,
-      repeat: -1,
-    })
+    const testMeshLineGeometry = new MeshLineGeometry()
+    const testPoints = [
+      new THREE.Vector3(-0.75, -0.4, 0.0),
+      new THREE.Vector3(0.75, -0.4, 0.0),
+      new THREE.Vector3(0.75, 0.4, 0.0),
+    ]
+
+    testMeshLineGeometry.setPoints(testPoints)
+    const testMesh = new THREE.Mesh(testMeshLineGeometry, testMeshLineMat)
+    scene.add(testMesh)
+
+    meshLineMat.uniforms.uProgression = { value: 1 }
+    // gsap.to(meshLineMat.uniforms.uProgression, {
+    //   value: 1,
+    //   duration: 2,
+    //   ease: 'sine.inOut',
+    //   yoyo: true,
+    //   repeat: -1,
+    // })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -109,6 +160,10 @@ const CircuitShaderParticlesScene = () => {
           geometry.dispose()
         })
       }
+
+      //   scene.remove(testMesh)
+
+      testMeshLineGeometry.dispose()
     }
   }, [])
 
@@ -129,7 +184,7 @@ const CircuitShaderParticlesScene = () => {
       </Plane>
 
       <Plane
-        // visible={false}
+        visible={false}
         ref={testPlaneRef}
         position={[0, 0, 0]}
         args={[viewport.width - 0.2, 0.25]}
