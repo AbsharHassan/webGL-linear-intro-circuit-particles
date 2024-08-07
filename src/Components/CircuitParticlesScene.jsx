@@ -112,7 +112,7 @@ const CircuitParticlesScene = () => {
     let opacityArray = new Float32Array(count)
 
     for (let i = 0; i < opacityArray.length; i++) {
-      opacityArray[i] = Math.random() / 20
+      opacityArray[i] = (Math.random() + 0.2) / 20
     }
 
     iMeshRef.current.geometry.setAttribute(
@@ -244,12 +244,12 @@ const CircuitParticlesScene = () => {
     //   },
     // })
 
-    setTimeout(() => {
-      gl.preserveDrawingBuffer = false
-      gl.autoClear = true
+    // setTimeout(() => {
+    //   gl.preserveDrawingBuffer = false
+    //   gl.autoClear = true
 
-      console.log(gl)
-    }, 10000)
+    //   console.log(gl)
+    // }, 10000)
   }, [paths])
 
   // useFrame(() => {
@@ -331,7 +331,7 @@ const CircuitParticlesScene = () => {
           transparent
           depthTest={false}
           depthWrite={false}
-          blending={THREE.AdditiveBlending}
+          // blending={THREE.AdditiveBlending}
         />
       </instancedMesh>
     </>

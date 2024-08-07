@@ -10,6 +10,7 @@ import WaveSceneDoubleBuffer from './Components/WaveSceneDoubleBuffer'
 import CircuitScene from './Components/CircuitScene'
 import TestFadePlane from './Components/TestFadePlane'
 import CircuitParticlesScene from './Components/CircuitParticlesScene'
+import CircuitShaderParticlesScene from './Components/CircuitShaderParticlesScene'
 
 function App() {
   let mousePosition = useRef({ x: 0, y: 0 })
@@ -46,9 +47,10 @@ function App() {
         // fov: 20,
       }}
       gl={{
-        preserveDrawingBuffer: true,
         alpha: true,
-        autoClear: false,
+        // preserveDrawingBuffer: true,
+        // alpha: true,
+        // autoClear: false,
       }}
     >
       <Stats />
@@ -66,7 +68,8 @@ function App() {
       {/* <WaveSceneDoubleBuffer mousePosition={mousePosition} /> */}
       {/* <CircuitScene /> */}
       {/* <TestFadePlane /> */}
-      <CircuitParticlesScene />
+      {/* <CircuitParticlesScene /> */}
+      <CircuitShaderParticlesScene />
     </Canvas>
   )
 }
