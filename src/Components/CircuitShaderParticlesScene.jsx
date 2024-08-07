@@ -134,7 +134,22 @@ const CircuitShaderParticlesScene = () => {
 
     testMeshLineGeometry.setPoints(testPoints)
     const testMesh = new THREE.Mesh(testMeshLineGeometry, testMeshLineMat)
+
     scene.add(testMesh)
+
+    let lineLength = 0
+
+    for (let i = 1; i < testPoints.length; i++) {
+      const dis = testPoints[i].distanceTo(testPoints[i - 1])
+      lineLength += dis
+    }
+
+    console.log(lineLength / testMeshLineMat.lineWidth)
+
+    testMeshLineMat.uniforms.uResolution = {
+      // increasing the x value of this vector makes the circles more rounded
+      value: new THREE.Vector2(lineLength + 0.5, testMeshLineMat.lineWidth),
+    }
 
     meshLineMat.uniforms.uProgression = { value: 1 }
     // gsap.to(meshLineMat.uniforms.uProgression, {
