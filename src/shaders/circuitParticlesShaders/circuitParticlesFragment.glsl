@@ -24,4 +24,6 @@ void main() {
     float circle = 0.2 / length(cUv);
 
     gl_FragColor = vec4(circle, 0.0, 0.0, circle) * circle;
+
+    gl_FragColor = vec4(vUv, 0.0, 1.0);
 }

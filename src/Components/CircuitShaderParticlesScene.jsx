@@ -47,23 +47,13 @@ const meshLineMat = new MeshLineMaterial({
   fragmentShader: circuitLinesFragment,
 })
 
-const testMeshLineMat = new MeshLineMaterial({
-  lineWidth: 0.0125,
-  transparent: true,
-  //   depthTest: false,
-  //   depthWrite: false,
-  //   blending: THREE.AdditiveBlending,
-  //   fragmentShader: circuitLinesFragment,
-  //   wireframe: true,
-})
-
 const CircuitShaderParticlesScene = () => {
   const { scene, viewport, gl } = useThree()
 
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
 
-  let shaderPlaneRef = useRef(null)
+  const [linePaths, setLinePaths] = useState(null)
 
   const uniforms = useMemo(() => {
     return {
@@ -76,39 +66,6 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [viewport])
 
-  const uniformsParticlePlane = useMemo(() => {
-    return {
-      uResolution: {
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-      },
-    }
-  }, [])
-
-  const testPoints = useMemo(() => {
-    return [
-      [0.6875, 0.3984375, 0],
-      [0.6875, 0.375, 0],
-      [0.71875, 0.375, 0],
-      [0.71875, 0.3515625, 0],
-      [0.71875, 0.328125, 0],
-      [0.75, 0.328125, 0],
-      [0.75, 0.3046875, 0],
-      [0.75, 0.28125, 0],
-      [0.75, 0.2578125, 0],
-      [0.75, 0.234375, 0],
-      [0.75, 0.2109375, 0],
-      [0.75, 0.1875, 0],
-      [0.78125, 0.1875, 0],
-      [0.8125, 0.1875, 0],
-      [0.84375, 0.1875, 0],
-      [0.875, 0.1875, 0],
-      [0.90625, 0.1875, 0],
-      [0.9375, 0.1875, 0],
-      [0.96875, 0.1875, 0],
-      [1, 0.1875, 0],
-    ]
-  }, [])
-
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
@@ -117,83 +74,14 @@ const CircuitShaderParticlesScene = () => {
     const circuitLinesMeshes = []
 
     let tempPaths = []
-
-    let pointsForShader = []
-
-    circuitVertices.map((vertices, index) => {
+    tempPaths = circuitVertices.map((vertices) => {
       vertices.reverse()
 
-      //   if (index === 1) {
-      //     const meshLineGeo = new MeshLineGeometry()
-      //     const points = vertices.map((obj) => [obj.x, obj.y, obj.z])
+      let vec2Array = vertices.map(({ x, y }) => new THREE.Vector2(x, y))
 
-      //     console.log(points)
-
-      //     meshLineGeo.setPoints(points)
-      //     circuitLinesGeos.push(meshLineGeo)
-
-      //     const mesh = new THREE.Mesh(meshLineGeo, meshLineMat)
-
-      //     scene.add(mesh)
-      //     circuitLinesMeshes.push(mesh)
-      //   }
-
-      const point = vertices[Math.floor(vertices.length / 2)]
-
-      pointsForShader.push(point)
+      return new THREE.Path(vec2Array)
     })
-
-    const count = pointsForShader.length * 3
-
-    let pointsFloat32 = new Float32Array(count)
-
-    for (let i = 0; i < pointsForShader.length; i++) {
-      let { x, y, z } = pointsForShader[i]
-
-      x = x / viewport.width
-      y = y / viewport.height
-      pointsFloat32.set([x, y, z], i * 3)
-    }
-
-    shaderPlaneRef.current.geometry.setAttribute(
-      'aPoint',
-      new THREE.BufferAttribute(pointsFloat32, 3)
-    )
-
-    const testMeshLineGeometry = new MeshLineGeometry()
-    const testPoints = [
-      new THREE.Vector3(-0.75, -0.4, 0.0),
-      new THREE.Vector3(0.75, -0.4, 0.0),
-      new THREE.Vector3(0.75, 0.4, 0.0),
-    ]
-
-    testMeshLineGeometry.setPoints(testPoints)
-    const testMesh = new THREE.Mesh(testMeshLineGeometry, testMeshLineMat)
-
-    // scene.add(testMesh)
-
-    let lineLength = 0
-
-    for (let i = 1; i < testPoints.length; i++) {
-      const dis = testPoints[i].distanceTo(testPoints[i - 1])
-      lineLength += dis
-    }
-
-    console.log(lineLength / testMeshLineMat.lineWidth)
-
-    testMeshLineMat.uniforms.uResolution = {
-      // increasing the x value of this vector makes the circles more rounded
-      value: new THREE.Vector2(lineLength + 0.8, testMeshLineMat.lineWidth),
-    }
-
-    meshLineMat.uniforms.uProgression = { value: 1 }
-    // gsap.to(meshLineMat.uniforms.uProgression, {
-    //   value: 1,
-    //   duration: 2,
-    //   ease: 'sine.inOut',
-    //   yoyo: true,
-    //   repeat: -1,
-    // })
+    setLinePaths(tempPaths)
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -210,12 +98,59 @@ const CircuitShaderParticlesScene = () => {
           geometry.dispose()
         })
       }
-
-      //   scene.remove(testMesh)
-
-      testMeshLineGeometry.dispose()
     }
   }, [])
+
+  useEffect(() => {
+    if (!linePaths) {
+      return
+    }
+
+    const progression = {
+      t: 0,
+    }
+
+    const count = 467 * (POINTS_PER_PATH + 1)
+    const positionsFloat32 = new Float32Array(count * 3)
+
+    iMeshRef.current.geometry.setAttribute(
+      'pos',
+      new THREE.InstancedBufferAttribute(positionsFloat32, 3, false)
+    )
+
+    gsap.to(progression, {
+      t: 1,
+      ease: 'none',
+      duration: 5,
+      onUpdate: () => {
+        let iMeshIndex = 0
+        let someArr = []
+
+        for (let i = 0; i < linePaths?.length; i++) {
+          const path = linePaths[i]
+
+          for (let j = 0; j <= POINTS_PER_PATH; j++) {
+            const offset = j / POINTS_PER_PATH
+            const u = Math.max(progression.t - offset, 0)
+
+            someArr.push(progression.t - offset)
+
+            const point = path.getPointAt(u)
+
+            positionsFloat32.set([point.x, point.y, 0], iMeshIndex * 3)
+
+            iMeshIndex++
+          }
+        }
+        iMeshRef.current.geometry.attributes.pos.array = positionsFloat32
+        iMeshRef.current.geometry.attributes.pos.needsUpdate = true
+
+        // console.log(someArr)
+      },
+    })
+
+    console.log(linePaths)
+  }, [linePaths])
 
   return (
     <>
@@ -249,18 +184,7 @@ const CircuitShaderParticlesScene = () => {
         />
       </Plane>
 
-      <Plane
-        args={[viewport.width, viewport.height, 1, 1]}
-        ref={shaderPlaneRef}
-      >
-        <shaderMaterial
-          vertexShader={circuitPlaneParticlesVertex}
-          fragmentShader={circuitPlaneParticlesFragment}
-          uniforms={uniformsParticlePlane}
-        />
-      </Plane>
-
-      {/* <instancedMesh
+      <instancedMesh
         ref={iMeshRef}
         args={[null, null, 467 * (POINTS_PER_PATH + 1)]}
         // args={[null, null, 467]}
@@ -274,7 +198,7 @@ const CircuitShaderParticlesScene = () => {
           depthWrite={false}
           // blending={THREE.AdditiveBlending}
         />
-      </instancedMesh> */}
+      </instancedMesh>
     </>
   )
 }
