@@ -29,15 +29,24 @@ void main() {
     float l6 = length(vec2(st.x - 0.3, st.y));
     float l7 = length(vec2(st.x - 150.6, st.y));
 
-    float dTest = 0.1 / length(vUV);
+    float dTest = 0.1 / length(vec2(st.x - 2.6, st.y));
+    float dSmooth = smoothstep(0.0, 0.5, dTest);
 
-    float d1 = 0.1 / pow(l1, 1.0);
-    float d2 = 0.1 / pow(l2, 1.0);
-    float d3 = 0.1 / pow(l3, 1.0);
-    float d4 = 0.1 / pow(l4, 1.0);
-    float d5 = 0.1 / pow(l5, 1.0);
-    float d6 = 0.1 / pow(l6, 1.0);
-    float d7 = 0.1 / pow(l7, 1.0);
+    float d1 = 0.12 / pow(l1, 1.0);
+    float d2 = 0.12 / pow(l2, 1.0);
+    float d3 = 0.12 / pow(l3, 1.0);
+    float d4 = 0.12 / pow(l4, 1.0);
+    float d5 = 0.12 / pow(l5, 1.0);
+    float d6 = 0.12 / pow(l6, 1.0);
+    float d7 = 0.12 / pow(l7, 1.0);
+
+    // d1 = smoothstep(0.0, 0.7, d1);
+    // d2 = smoothstep(0.0, 0.7, d2);
+    // d3 = smoothstep(0.0, 0.7, d3);
+    // d4 = smoothstep(0.0, 0.7, d4);
+    // d5 = smoothstep(0.0, 0.7, d5);
+    // d6 = smoothstep(0.0, 0.7, d6);
+    // d7 = smoothstep(0.0, 0.7, d7);
 
     // float d1 = smoothstep(0.6, 0.0, l1);
     // float d2 = smoothstep(0.6, 0.0, l2);

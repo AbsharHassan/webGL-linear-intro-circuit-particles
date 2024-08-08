@@ -19,6 +19,9 @@ import circuitLinesFragmentTest from '../shaders/circuitLinesShaders/circuitLine
 import circuitLinesFragment from '../shaders/circuitLinesShaders/circuitLinesFragment.glsl'
 import circuitLinesVertex from '../shaders/circuitLinesShaders/circuitLinesVertex.glsl'
 
+import circuitPlaneParticlesFragment from '../shaders/circuitPlaneParticlesShaders/circuitPlaneParticlesFragment.glsl'
+import circuitPlaneParticlesVertex from '../shaders/circuitPlaneParticlesShaders/circuitPlaneParticlesVertex.glsl'
+
 import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuitParticlesFragment.glsl'
 import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
 
@@ -45,12 +48,13 @@ const meshLineMat = new MeshLineMaterial({
 })
 
 const testMeshLineMat = new MeshLineMaterial({
-  lineWidth: 0.125,
+  lineWidth: 0.0125,
   transparent: true,
-  depthTest: false,
-  depthWrite: false,
+  //   depthTest: false,
+  //   depthWrite: false,
   //   blending: THREE.AdditiveBlending,
-  fragmentShader: circuitLinesFragment,
+  //   fragmentShader: circuitLinesFragment,
+  //   wireframe: true,
 })
 
 const CircuitShaderParticlesScene = () => {
@@ -58,6 +62,8 @@ const CircuitShaderParticlesScene = () => {
 
   let iMeshRef = useRef(null)
   let testPlaneRef = useRef(null)
+
+  let shaderPlaneRef = useRef(null)
 
   const uniforms = useMemo(() => {
     return {
@@ -69,6 +75,14 @@ const CircuitShaderParticlesScene = () => {
       },
     }
   }, [viewport])
+
+  const uniformsParticlePlane = useMemo(() => {
+    return {
+      uResolution: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+    }
+  }, [])
 
   const testPoints = useMemo(() => {
     return [
@@ -104,6 +118,8 @@ const CircuitShaderParticlesScene = () => {
 
     let tempPaths = []
 
+    let pointsForShader = []
+
     circuitVertices.map((vertices, index) => {
       vertices.reverse()
 
@@ -121,9 +137,28 @@ const CircuitShaderParticlesScene = () => {
       //     scene.add(mesh)
       //     circuitLinesMeshes.push(mesh)
       //   }
+
+      const point = vertices[Math.floor(vertices.length / 2)]
+
+      pointsForShader.push(point)
     })
 
-    console.log(viewport)
+    const count = pointsForShader.length * 3
+
+    let pointsFloat32 = new Float32Array(count)
+
+    for (let i = 0; i < pointsForShader.length; i++) {
+      let { x, y, z } = pointsForShader[i]
+
+      x = x / viewport.width
+      y = y / viewport.height
+      pointsFloat32.set([x, y, z], i * 3)
+    }
+
+    shaderPlaneRef.current.geometry.setAttribute(
+      'aPoint',
+      new THREE.BufferAttribute(pointsFloat32, 3)
+    )
 
     const testMeshLineGeometry = new MeshLineGeometry()
     const testPoints = [
@@ -135,7 +170,7 @@ const CircuitShaderParticlesScene = () => {
     testMeshLineGeometry.setPoints(testPoints)
     const testMesh = new THREE.Mesh(testMeshLineGeometry, testMeshLineMat)
 
-    scene.add(testMesh)
+    // scene.add(testMesh)
 
     let lineLength = 0
 
@@ -148,7 +183,7 @@ const CircuitShaderParticlesScene = () => {
 
     testMeshLineMat.uniforms.uResolution = {
       // increasing the x value of this vector makes the circles more rounded
-      value: new THREE.Vector2(lineLength + 0.5, testMeshLineMat.lineWidth),
+      value: new THREE.Vector2(lineLength + 0.8, testMeshLineMat.lineWidth),
     }
 
     meshLineMat.uniforms.uProgression = { value: 1 }
@@ -211,6 +246,17 @@ const CircuitShaderParticlesScene = () => {
           transparent
           depthTest={false}
           depthWrite={false}
+        />
+      </Plane>
+
+      <Plane
+        args={[viewport.width, viewport.height, 1, 1]}
+        ref={shaderPlaneRef}
+      >
+        <shaderMaterial
+          vertexShader={circuitPlaneParticlesVertex}
+          fragmentShader={circuitPlaneParticlesFragment}
+          uniforms={uniformsParticlePlane}
         />
       </Plane>
 
