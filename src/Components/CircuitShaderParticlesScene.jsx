@@ -66,6 +66,10 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [viewport])
 
+  function getFractionalPart(num) {
+    return num - Math.floor(num)
+  }
+
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
@@ -75,13 +79,23 @@ const CircuitShaderParticlesScene = () => {
 
     let tempPaths = []
     tempPaths = circuitVertices.map((vertices) => {
-      vertices.reverse()
+      // vertices.reverse()
 
       let vec2Array = vertices.map(({ x, y }) => new THREE.Vector2(x, y))
 
       return new THREE.Path(vec2Array)
     })
     setLinePaths(tempPaths)
+
+    let count = 467 * (POINTS_PER_PATH + 1)
+    let opacityArray = new Float32Array(count)
+    for (let i = 0; i < opacityArray.length; i++) {
+      opacityArray[i] = (Math.random() + 0.2) / 20
+    }
+    iMeshRef.current.geometry.setAttribute(
+      'aOpacity',
+      new THREE.InstancedBufferAttribute(opacityArray, 1, false)
+    )
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -119,12 +133,12 @@ const CircuitShaderParticlesScene = () => {
     )
 
     gsap.to(progression, {
-      t: 1,
-      ease: 'none',
+      t: 5,
+      ease: 'sine.inOut',
+      // ease: 'none',
       duration: 5,
       onUpdate: () => {
         let iMeshIndex = 0
-        let someArr = []
 
         for (let i = 0; i < linePaths?.length; i++) {
           const path = linePaths[i]
@@ -133,19 +147,18 @@ const CircuitShaderParticlesScene = () => {
             const offset = j / POINTS_PER_PATH
             const u = Math.max(progression.t - offset, 0)
 
-            someArr.push(progression.t - offset)
+            const u2 = getFractionalPart(u)
 
-            const point = path.getPointAt(u)
+            const point = path.getPointAt(u2)
 
             positionsFloat32.set([point.x, point.y, 0], iMeshIndex * 3)
 
             iMeshIndex++
           }
         }
+
         iMeshRef.current.geometry.attributes.pos.array = positionsFloat32
         iMeshRef.current.geometry.attributes.pos.needsUpdate = true
-
-        // console.log(someArr)
       },
     })
 
@@ -196,7 +209,7 @@ const CircuitShaderParticlesScene = () => {
           transparent
           depthTest={false}
           depthWrite={false}
-          // blending={THREE.AdditiveBlending}
+          blending={THREE.AdditiveBlending}
         />
       </instancedMesh>
     </>
