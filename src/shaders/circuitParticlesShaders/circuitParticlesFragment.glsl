@@ -3,6 +3,8 @@ precision highp float;
 varying vec2 vUv;
 varying float vOpacity;
 
+uniform float uOpacity;
+
 void main() {
     vec2 cUv = vUv - 0.5;
 
@@ -19,7 +21,7 @@ void main() {
 
     finalColor.a = min(1.0, finalColor.a) * 10.0;
 
-    gl_FragColor = vec4(finalColor);
+    gl_FragColor = vec4(finalColor) * uOpacity;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // float circle = 0.2 / length(cUv);

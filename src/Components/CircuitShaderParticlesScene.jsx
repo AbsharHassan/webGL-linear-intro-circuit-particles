@@ -66,6 +66,14 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [viewport])
 
+  const particleUniforms = useMemo(() => {
+    return {
+      uOpacity: {
+        value: 0,
+      },
+    }
+  }, [])
+
   function getFractionalPart(num) {
     return num - Math.floor(num)
   }
@@ -132,8 +140,16 @@ const CircuitShaderParticlesScene = () => {
       new THREE.InstancedBufferAttribute(positionsFloat32, 3, false)
     )
 
+    console.log(iMeshRef.current.material.uniforms)
+
+    gsap.to(iMeshRef.current.material.uniforms.uOpacity, {
+      value: 1,
+      duration: 1,
+      ease: 'power1.in',
+    })
+
     gsap.to(progression, {
-      t: 5,
+      t: 1,
       ease: 'sine.inOut',
       // ease: 'none',
       duration: 5,
@@ -206,6 +222,7 @@ const CircuitShaderParticlesScene = () => {
         <shaderMaterial
           vertexShader={circuitParticlesVertex}
           fragmentShader={circuitParticlesFragment}
+          uniforms={particleUniforms}
           transparent
           depthTest={false}
           depthWrite={false}
