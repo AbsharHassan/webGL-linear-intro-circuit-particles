@@ -86,9 +86,13 @@ const CircuitShaderParticlesScene = () => {
     const circuitLinesMeshes = []
 
     let tempPaths = []
-    tempPaths = circuitVertices.map((vertices) => {
-      // vertices.reverse()
+    tempPaths = circuitVertices.map((vertices, index) => {
+      // use this to add more variation. Can also use Math.Random()
+      // if (index % 2 === 0) {
+      //   vertices.reverse()
+      // }
 
+      // can also add randomness here
       let vec2Array = vertices.map(({ x, y }) => new THREE.Vector2(x, y))
 
       return new THREE.Path(vec2Array)
@@ -218,7 +222,7 @@ const CircuitShaderParticlesScene = () => {
         args={[null, null, 467 * (POINTS_PER_PATH + 1)]}
         // args={[null, null, 467]}
       >
-        <boxGeometry args={[0.05 * 0.05, 0.05 * 0.05, 0]} />
+        <boxGeometry args={[0.05 * 0.0, 0.05 * 0.0, 0]} />
         <shaderMaterial
           vertexShader={circuitParticlesVertex}
           fragmentShader={circuitParticlesFragment}
