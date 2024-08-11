@@ -4,6 +4,30 @@ varying vec2 vUV;
 
 uniform vec2 uResolution;
 uniform float uProgression;
+uniform float uTime;
+
+uint murmurHash12(uvec2 src) {
+    const uint M = 0x5bd1e995u;
+    uint h = 1190494759u;
+    src *= M;
+    src ^= src >> 24u;
+    src *= M;
+    h *= M;
+    h ^= src.x;
+    h *= M;
+    h ^= src.y;
+    h ^= h >> 13u;
+    h *= M;
+    h ^= h >> 15u;
+    return h;
+}
+// 1 output, 2 inputs
+float hash12(vec2 src) {
+    uint h = murmurHash12(floatBitsToUint(src));
+    return uintBitsToFloat(h & 0x007fffffu | 0x3f800000u) - 1.0;
+}
+
+#pragma glslify: cnoise = require('glsl-noise/classic/3d.glsl')
 
 void main() {
     float aspectRatio = uResolution.x / uResolution.y;
@@ -13,7 +37,7 @@ void main() {
     // st.x = 1.0 - st.x;
     st.y -= 0.5;
 
-    st.x *= aspectRatio;
+    // st.x *= aspectRatio;
 
     float ss1 = smoothstep(0.5, 0.0, abs(st.y));
     // float ss2 = 1.0 - step(uProgression, st.x);
@@ -21,44 +45,12 @@ void main() {
 
     float beam = ss1 * ss2;
 
-    float l1 = length(vec2(st.x - 4.6, st.y));
-    float l2 = length(vec2(st.x - 8.6, st.y));
-    float l3 = length(vec2(st.x - 6.6, st.y));
-    float l4 = length(vec2(st.x - 2.5, st.y));
-    float l5 = length(vec2(st.x - 1.6, st.y));
-    float l6 = length(vec2(st.x - 0.3, st.y));
-    float l7 = length(vec2(st.x - 150.6, st.y));
+    float randomNumber = hash12(st);
 
-    float dTest = 0.1 / length(vec2(st.x - 2.6, st.y));
-    float dSmooth = smoothstep(0.0, 0.5, dTest);
+    float noise = cnoise(vec3(st, uTime));
 
-    float d1 = 0.12 / pow(l1, 1.0);
-    float d2 = 0.12 / pow(l2, 1.0);
-    float d3 = 0.12 / pow(l3, 1.0);
-    float d4 = 0.12 / pow(l4, 1.0);
-    float d5 = 0.12 / pow(l5, 1.0);
-    float d6 = 0.12 / pow(l6, 1.0);
-    float d7 = 0.12 / pow(l7, 1.0);
+    float l1 = length(vec2(st.x - noise, st.y));
+    float d1 = smoothstep(0.6, 0.0, l1);
 
-    // d1 = smoothstep(0.0, 0.7, d1);
-    // d2 = smoothstep(0.0, 0.7, d2);
-    // d3 = smoothstep(0.0, 0.7, d3);
-    // d4 = smoothstep(0.0, 0.7, d4);
-    // d5 = smoothstep(0.0, 0.7, d5);
-    // d6 = smoothstep(0.0, 0.7, d6);
-    // d7 = smoothstep(0.0, 0.7, d7);
-
-    // float d1 = smoothstep(0.6, 0.0, l1);
-    // float d2 = smoothstep(0.6, 0.0, l2);
-    // float d3 = smoothstep(0.6, 0.0, l3);
-    // float d4 = smoothstep(0.6, 0.0, l4);
-    // float d5 = smoothstep(0.6, 0.0, l5);
-    // float d6 = smoothstep(0.6, 0.0, l6);
-    // float d7 = smoothstep(0.6, 0.0, l7);
-
-    float allParticles = d1 + d2 + d3 + d4 + d5 + d6 + d7;
-
-    // gl_FragColor = vec4(beam, 0.0, 0.0, 1.0);
-    // gl_FragColor = vec4(uProgression, 0.0, 0.0, beam);
-    gl_FragColor = vec4(allParticles, 0.2, 0.0, 1.0);
+    gl_FragColor = vec4(d1, 0.0, 0.3, 1.0);
 }

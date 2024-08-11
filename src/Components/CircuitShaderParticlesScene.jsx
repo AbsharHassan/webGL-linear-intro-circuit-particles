@@ -19,9 +19,6 @@ import circuitLinesFragmentTest from '../shaders/circuitLinesShaders/circuitLine
 import circuitLinesFragment from '../shaders/circuitLinesShaders/circuitLinesFragment.glsl'
 import circuitLinesVertex from '../shaders/circuitLinesShaders/circuitLinesVertex.glsl'
 
-import circuitPlaneParticlesFragment from '../shaders/circuitPlaneParticlesShaders/circuitPlaneParticlesFragment.glsl'
-import circuitPlaneParticlesVertex from '../shaders/circuitPlaneParticlesShaders/circuitPlaneParticlesVertex.glsl'
-
 import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuitParticlesFragment.glsl'
 import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
 
@@ -43,7 +40,7 @@ const meshLineMat = new MeshLineMaterial({
   transparent: true,
   depthTest: false,
   depthWrite: false,
-  blending: THREE.AdditiveBlending,
+  // blending: THREE.AdditiveBlending,
   fragmentShader: circuitLinesFragment,
 })
 
@@ -85,8 +82,22 @@ const CircuitShaderParticlesScene = () => {
     const circuitLinesMats = []
     const circuitLinesMeshes = []
 
+    meshLineMat.uniforms.uTime = { value: 0 }
+
     let tempPaths = []
     tempPaths = circuitVertices.map((vertices, index) => {
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // circuit traces START
+      const meshLineGeo = new MeshLineGeometry()
+      const linePoints = vertices.map(({ x, y }) => [x, y])
+      meshLineGeo.setPoints(linePoints)
+      const meshLineMesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+      scene.add(meshLineMesh)
+      circuitLinesGeos.push(meshLineGeo)
+      circuitLinesMeshes.push(meshLineMesh)
+      // circuit traces END
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
       // use this to add more variation. Can also use Math.Random()
       // if (index % 2 === 0) {
       //   vertices.reverse()
@@ -127,6 +138,12 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [])
 
+  useFrame(({ clock }) => {
+    if (meshLineMat.uniforms.uTime) {
+      meshLineMat.uniforms.uTime.value = clock.getElapsedTime()
+    }
+  })
+
   useEffect(() => {
     if (!linePaths) {
       return
@@ -143,8 +160,6 @@ const CircuitShaderParticlesScene = () => {
       'pos',
       new THREE.InstancedBufferAttribute(positionsFloat32, 3, false)
     )
-
-    console.log(iMeshRef.current.material.uniforms)
 
     gsap.to(iMeshRef.current.material.uniforms.uOpacity, {
       value: 1,
@@ -181,8 +196,6 @@ const CircuitShaderParticlesScene = () => {
         iMeshRef.current.geometry.attributes.pos.needsUpdate = true
       },
     })
-
-    console.log(linePaths)
   }, [linePaths])
 
   return (
@@ -205,13 +218,14 @@ const CircuitShaderParticlesScene = () => {
         visible={false}
         ref={testPlaneRef}
         position={[0, 0, 0]}
-        args={[viewport.width - 0.2, 0.25]}
+        // args={[viewport.width - 0.2, 0.25]}
+        args={[viewport.width, viewport.height]}
       >
         <shaderMaterial
           vertexShader={circuitLinesVertex}
           fragmentShader={circuitLinesFragmentTest}
           uniforms={uniforms}
-          transparent
+          // transparent
           depthTest={false}
           depthWrite={false}
         />
