@@ -6,6 +6,8 @@ varying float vOffsetValue;
 uniform vec2 uResolution;
 uniform float uProgression;
 uniform float uTime;
+uniform float uOffset;
+uniform float uOnOrOff;
 
 uint murmurHash12(uvec2 src) {
     const uint M = 0x5bd1e995u;
@@ -56,9 +58,20 @@ void main() {
     float noise = cnoise(vec3(st, uTime));
 
     // float l1 = length(vec2(st.x - hash11(5.34), st.y));
-    float l1 = length(vec2(st.x - vOffsetValue * 10.0, st.y));
+    // float l1 = length(vec2(st.x - uOffset, st.y));
+
+    // float progress = sin(uTime);
+    float progress = fract(uTime * 0.2 + uOffset);
+    float l1 = length(vec2((st.x - progress) * 0.5, st.y * 0.2));
     // float l1 = length(vec2(st.x - 0.5 * sin(noise), st.y));
-    float d1 = smoothstep(0.6, 0.0, l1);
+
+    float onOrOff = 0.0;
+
+    if(uOnOrOff > 0.75) {
+        onOrOff = 1.0;
+    }
+
+    float d1 = smoothstep(0.1, 0.0, l1) * onOrOff;
 
     float pulse = smoothstep(-1.0, 1.0, sin(vUV.x * 10.0 + uTime));
 

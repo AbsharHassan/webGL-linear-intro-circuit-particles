@@ -73,6 +73,8 @@ const CircuitShaderParticlesScene = () => {
     }
   }, [])
 
+  const materialsCircuit = useRef(null)
+
   function getFractionalPart(num) {
     return num - Math.floor(num)
   }
@@ -147,6 +149,8 @@ const CircuitShaderParticlesScene = () => {
       const linePoints = vertices.map(({ x, y }) => [x, y])
       meshLineGeo.setPoints(linePoints)
       const meshLineMesh = new THREE.Mesh(meshLineGeo, meshMaterial)
+      // if (index === 103) {
+      // }
       scene.add(meshLineMesh)
       circuitLinesGeos.push(meshLineGeo)
       circuitLinesMeshes.push(meshLineMesh)
@@ -165,19 +169,27 @@ const CircuitShaderParticlesScene = () => {
     })
     setLinePaths(tempPaths)
 
-    circuitLinesGeos.forEach((geo) => {
-      const count = geo.attributes.position.count
-      const offsetArray = new Float32Array(count)
+    // circuitLinesGeos.forEach((geo) => {
+    //   const count = geo.attributes.position.count
+    //   const offsetArray = new Float32Array(count)
 
-      for (let i = 0; i < 1; i++) {
-        offsetArray[i] = Math.random()
-      }
+    //   for (let i = 0; i < 1; i++) {
+    //     offsetArray[i] = Math.random()
+    //   }
 
-      geo.setAttribute(
-        'aOffsetValue',
-        new THREE.BufferAttribute(offsetArray, 1, false)
-      )
+    //   geo.setAttribute(
+    //     'aOffsetValue',
+    //     new THREE.BufferAttribute(offsetArray, 1, false)
+    //   )
+    // })
+
+    circuitLinesMats.forEach((material) => {
+      material.uniforms.uOnOrOff = { value: Math.random() }
+      material.uniforms.uOffset = { value: Math.random() }
+      material.uniforms.uTime = { value: 0 }
     })
+
+    materialsCircuit.current = circuitLinesMats
 
     let count = 467 * (POINTS_PER_PATH + 1)
     let opacityArray = new Float32Array(count)
@@ -216,6 +228,12 @@ const CircuitShaderParticlesScene = () => {
   useFrame(({ clock }) => {
     if (meshLineMat.uniforms.uTime) {
       meshLineMat.uniforms.uTime.value = clock.getElapsedTime()
+    }
+
+    if (materialsCircuit.current) {
+      materialsCircuit.current.forEach((material) => {
+        material.uniforms.uTime.value = clock.getElapsedTime()
+      })
     }
   })
 
