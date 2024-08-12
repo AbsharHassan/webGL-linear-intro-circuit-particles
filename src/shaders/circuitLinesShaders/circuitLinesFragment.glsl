@@ -1,6 +1,7 @@
 precision highp float;
 
 varying vec2 vUV;
+varying float vOffsetValue;
 
 uniform vec2 uResolution;
 uniform float uProgression;
@@ -27,6 +28,11 @@ float hash12(vec2 src) {
     return uintBitsToFloat(h & 0x007fffffu | 0x3f800000u) - 1.0;
 }
 
+float hash11(float x) {
+    x = fract(sin(x) * 43758.5453123);
+    return x;
+}
+
 #pragma glslify: cnoise = require('glsl-noise/classic/3d.glsl')
 
 void main() {
@@ -39,7 +45,7 @@ void main() {
 
     // st.x *= aspectRatio;
 
-    float ss1 = smoothstep(0.5, 0.0, abs(st.y));
+    float ss1 = smoothstep(0.2, 0.0, abs(st.y));
     // float ss2 = 1.0 - step(uProgression, st.x);
     float ss2 = 1.0 - step(1.0, st.x);
 
@@ -49,8 +55,16 @@ void main() {
 
     float noise = cnoise(vec3(st, uTime));
 
-    float l1 = length(vec2(st.x - noise, st.y));
+    // float l1 = length(vec2(st.x - hash11(5.34), st.y));
+    float l1 = length(vec2(st.x - vOffsetValue * 10.0, st.y));
+    // float l1 = length(vec2(st.x - 0.5 * sin(noise), st.y));
     float d1 = smoothstep(0.6, 0.0, l1);
 
+    float pulse = smoothstep(-1.0, 1.0, sin(vUV.x * 10.0 + uTime));
+
+    // float final = beam + d1 * 0.3;
+    float final = beam;
+
     gl_FragColor = vec4(d1, 0.0, 0.3, 1.0);
+    // gl_FragColor = vec4(1.0, 1.0, 1.0, final);
 }

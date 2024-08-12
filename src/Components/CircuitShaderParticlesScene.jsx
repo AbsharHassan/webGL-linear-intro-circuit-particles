@@ -23,6 +23,8 @@ import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuit
 import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
 
 import { degToRad } from 'three/src/math/MathUtils.js'
+import CustomCurve from '../CustomCurve'
+import modifyShaderString from '../helpers/modifyShaderString'
 
 // const POINTS_PER_PATH = 100
 const POINTS_PER_PATH = 100
@@ -38,8 +40,8 @@ const dummyObj3D = new THREE.Object3D()
 const meshLineMat = new MeshLineMaterial({
   lineWidth: 0.0125,
   transparent: true,
-  depthTest: false,
-  depthWrite: false,
+  depthTest: true,
+  depthWrite: true,
   // blending: THREE.AdditiveBlending,
   fragmentShader: circuitLinesFragment,
 })
@@ -78,6 +80,32 @@ const CircuitShaderParticlesScene = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
+    // console.log(circuitVertices)
+
+    // let separatedArray = []
+
+    // circuitVertices.forEach((pathArray) => {
+
+    // })
+
+    meshLineMat.onBeforeCompile = (material) => {
+      // console.log(material.vertexShader)
+      const originalVertexShader = material.vertexShader
+
+      let newVertexShader = modifyShaderString(
+        originalVertexShader,
+        'attribute float aOffsetValue; \n varying float vOffsetValue;',
+        0
+      )
+      newVertexShader = modifyShaderString(
+        newVertexShader,
+        'vOffsetValue = aOffsetValue;',
+        1
+      )
+
+      material.vertexShader = newVertexShader
+    }
+
     const circuitLinesGeos = []
     const circuitLinesMats = []
     const circuitLinesMeshes = []
@@ -88,10 +116,37 @@ const CircuitShaderParticlesScene = () => {
     tempPaths = circuitVertices.map((vertices, index) => {
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // circuit traces START
+      const meshMaterial = new MeshLineMaterial({
+        lineWidth: 0.0125,
+        transparent: true,
+        depthTest: true,
+        depthWrite: true,
+        // blending: THREE.AdditiveBlending,
+        fragmentShader: circuitLinesFragment,
+      })
+      meshMaterial.onBeforeCompile = (material) => {
+        // console.log(material.vertexShader)
+        const originalVertexShader = material.vertexShader
+
+        let newVertexShader = modifyShaderString(
+          originalVertexShader,
+          'attribute float aOffsetValue; \n varying float vOffsetValue;',
+          0
+        )
+        newVertexShader = modifyShaderString(
+          newVertexShader,
+          'vOffsetValue = aOffsetValue;',
+          1
+        )
+
+        material.vertexShader = newVertexShader
+      }
+      circuitLinesMats.push(meshMaterial)
+
       const meshLineGeo = new MeshLineGeometry()
       const linePoints = vertices.map(({ x, y }) => [x, y])
       meshLineGeo.setPoints(linePoints)
-      const meshLineMesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+      const meshLineMesh = new THREE.Mesh(meshLineGeo, meshMaterial)
       scene.add(meshLineMesh)
       circuitLinesGeos.push(meshLineGeo)
       circuitLinesMeshes.push(meshLineMesh)
@@ -109,6 +164,20 @@ const CircuitShaderParticlesScene = () => {
       return new THREE.Path(vec2Array)
     })
     setLinePaths(tempPaths)
+
+    circuitLinesGeos.forEach((geo) => {
+      const count = geo.attributes.position.count
+      const offsetArray = new Float32Array(count)
+
+      for (let i = 0; i < 1; i++) {
+        offsetArray[i] = Math.random()
+      }
+
+      geo.setAttribute(
+        'aOffsetValue',
+        new THREE.BufferAttribute(offsetArray, 1, false)
+      )
+    })
 
     let count = 467 * (POINTS_PER_PATH + 1)
     let opacityArray = new Float32Array(count)
@@ -135,6 +204,12 @@ const CircuitShaderParticlesScene = () => {
           geometry.dispose()
         })
       }
+
+      if (circuitLinesMats) {
+        circuitLinesMats.forEach((material) => {
+          material.dispose()
+        })
+      }
     }
   }, [])
 
@@ -148,6 +223,10 @@ const CircuitShaderParticlesScene = () => {
     if (!linePaths) {
       return
     }
+
+    // linePaths.forEach((path) => {
+    //   const customCurve = new CustomCurve(path)
+    // })
 
     const progression = {
       t: 0,
