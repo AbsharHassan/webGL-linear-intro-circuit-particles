@@ -116,6 +116,7 @@ const CircuitShaderParticlesScene = () => {
 
     let tempPaths = []
     tempPaths = circuitVertices.map((vertices, index) => {
+      vertices.reverse()
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       // circuit traces START
       const meshMaterial = new MeshLineMaterial({

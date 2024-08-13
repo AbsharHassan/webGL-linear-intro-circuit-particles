@@ -61,7 +61,7 @@ void main() {
     // float l1 = length(vec2(st.x - uOffset, st.y));
 
     // float progress = sin(uTime);
-    float progress = fract(uTime * 0.2 + uOffset);
+    float progress = fract(uTime * 0.4 + uOffset);
     float l1 = length(vec2((st.x - progress) * 0.5, st.y * 0.2));
     // float l1 = length(vec2(st.x - 0.5 * sin(noise), st.y));
 
@@ -79,9 +79,9 @@ void main() {
 
     float pulse = smoothstep(-1.0, 1.0, sin(vUV.x * 10.0 + uTime));
 
-    // float final = beam + d1 * 0.3;
-    float final = beam;
+    float final = beam * 0.2 + d1 * smoothedEnds * 0.8;
+    // float final = beam;
 
-    gl_FragColor = vec4(d1 * smoothedEnds, 0.0, 0.3, 1.0);
-    // gl_FragColor = vec4(1.0, 1.0, 1.0, final);
+    // gl_FragColor = vec4(d1 * smoothedEnds, 0.0, 0.3, 1.0);
+    gl_FragColor = vec4(1.0, 1.0, 1.0, final);
 }
