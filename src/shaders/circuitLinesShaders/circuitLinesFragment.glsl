@@ -73,11 +73,15 @@ void main() {
 
     float d1 = smoothstep(0.1, 0.0, l1) * onOrOff;
 
+    // float smoothedEnds = smoothstep(0.2, 0.0, st.x);
+    float smoothedEnds = smoothstep(1.0, 0.8, st.x);
+    smoothedEnds -= smoothstep(0.2, 0.0, st.x);
+
     float pulse = smoothstep(-1.0, 1.0, sin(vUV.x * 10.0 + uTime));
 
     // float final = beam + d1 * 0.3;
     float final = beam;
 
-    gl_FragColor = vec4(d1, 0.0, 0.3, 1.0);
+    gl_FragColor = vec4(d1 * smoothedEnds, 0.0, 0.3, 1.0);
     // gl_FragColor = vec4(1.0, 1.0, 1.0, final);
 }
