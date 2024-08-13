@@ -35,42 +35,83 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    console.log(circuitVertices)
+    // console.log(circuitVertices)
 
     let separatedArray = []
 
-    const singleLine = addLines(circuitVertices[0])
+    // const singleLine = addLines(circuitVertices[0])
+
+    let trueLinePointsArray = []
+
+    let allLines = []
 
     let numOfTrueLines = 0
     let currentOrientation = 'vertical'
     let prevOrientation = 'vertical'
 
-    circuitVertices.forEach((pathArray) => {
+    circuitVertices.forEach((pathArray, index) => {
+      if (index > 0) {
+        return
+      }
+      console.log(pathArray)
+
       const p1 = pathArray[0]
       const p2 = pathArray[1]
 
       if (p1.x === p2.x) {
-        currentOrientation = 'vertical'
+        prevOrientation = 'vertical'
       } else if (p1.y === p2.y) {
-        currentOrientation = 'horizontal'
+        prevOrientation = 'horizontal'
       } else {
         console.log('something weird happened')
       }
 
-      if (currentOrientation !== prevOrientation) {
-        numOfTrueLines++
-      }
+      let pivotIndex = 0
+      for (let i = 2; i < pathArray.length; i++) {
+        const p1 = pathArray[i - 1]
+        const p2 = pathArray[i]
 
-      prevOrientation = currentOrientation
+        if (p1.x === p2.x) {
+          currentOrientation = 'vertical'
+        } else if (p1.y === p2.y) {
+          currentOrientation = 'horizontal'
+        } else {
+          console.log('something weird happened')
+        }
+
+        // console.log(currentOrientation, i)
+
+        if (currentOrientation !== prevOrientation) {
+          numOfTrueLines++
+
+          // console.log('direction changed', i)
+
+          let subArray = pathArray.slice(pivotIndex, i)
+
+          console.log(subArray)
+          pivotIndex = i
+        }
+
+        if (i === pathArray.length - 1) {
+          console.log(pivotIndex)
+
+          console.log(i)
+
+          let subArray = pathArray.slice(pivotIndex)
+          console.log(subArray)
+        }
+
+        prevOrientation = currentOrientation
+      }
     })
 
-    console.log(numOfTrueLines)
+    // console.log(numOfTrueLines)
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
-      scene.remove(singleLine)
+      // scene.remove(singleLine)
     }
   }, [])
 
