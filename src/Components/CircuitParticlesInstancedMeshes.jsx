@@ -23,9 +23,14 @@ const yGap = gridHeight / heightSegments
 
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
-const lineMaterial = new THREE.LineBasicMaterial({
+const lineMaterialNew = new THREE.LineBasicMaterial({
   color: 0xff0000,
 })
+const lineMaterialOld = new THREE.LineBasicMaterial({
+  color: 0x00ffff,
+})
+
+console.log(lineMaterialNew.color)
 
 const CircuitParticlesInstancedMeshes = () => {
   const { scene, viewport, gl } = useThree()
@@ -35,7 +40,7 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    // console.log(circuitVertices)
+    console.log(circuitVertices)
 
     let separatedArray = []
 
@@ -43,17 +48,22 @@ const CircuitParticlesInstancedMeshes = () => {
 
     let trueLinePointsArray = []
 
-    let allLines = []
+    let oldLines = []
+
+    let newLines = []
 
     let numOfTrueLines = 0
     let currentOrientation = 'vertical'
     let prevOrientation = 'vertical'
 
     circuitVertices.forEach((pathArray, index) => {
-      if (index > 0) {
-        return
-      }
-      console.log(pathArray)
+      // if (index !== 4) {
+      //   return
+      // }
+
+      // console.log(pathArray)
+
+      oldLines.push(addLines(pathArray, lineMaterialOld))
 
       const p1 = pathArray[0]
       const p2 = pathArray[1]
@@ -87,39 +97,63 @@ const CircuitParticlesInstancedMeshes = () => {
           // console.log('direction changed', i)
 
           let subArray = pathArray.slice(pivotIndex, i)
+          // if (subArray.length === 1) {
+          //   subArray.unshift(pathArray[i - 2])
+          // }
 
-          console.log(subArray)
+          trueLinePointsArray.push(subArray)
+
           pivotIndex = i
         }
 
         if (i === pathArray.length - 1) {
-          console.log(pivotIndex)
-
-          console.log(i)
-
           let subArray = pathArray.slice(pivotIndex)
-          console.log(subArray)
+          // if (subArray.length === 1) {
+          //   subArray.unshift(pathArray[i - 2])
+          // }
+          trueLinePointsArray.push(subArray)
+          numOfTrueLines++
         }
 
         prevOrientation = currentOrientation
       }
     })
 
-    // console.log(numOfTrueLines)
+    console.log(trueLinePointsArray)
+
+    console.log(numOfTrueLines)
+
+    newLines = trueLinePointsArray.map((pointsArray) => {
+      return addLines(pointsArray, lineMaterialNew)
+    })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
       // scene.remove(singleLine)
+      if (newLines.length) {
+        newLines.forEach((line) => {
+          scene.remove(line)
+        })
+      }
+      if (oldLines.length) {
+        oldLines.forEach((line) => {
+          scene.remove(line)
+        })
+      }
     }
   }, [])
 
-  const addLines = (vertices) => {
+  const addLines = (vertices, lineMaterial) => {
     let points = []
 
     vertices.forEach((vertex) => {
-      points.push(new THREE.Vector3(vertex.x, vertex.y, vertex.z))
+      let z = 0
+      if (lineMaterial.color.r === 1) {
+        z = 0.0006
+      }
+      points.push(new THREE.Vector3(vertex.x, vertex.y, z))
     })
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points)
