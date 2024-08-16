@@ -20,9 +20,11 @@ const gridWidth = 2
 const gridHeight = 1.5
 const xGap = gridWidth / widthSegments
 const yGap = gridHeight / heightSegments
+const LINE_WIDTH = 0.0125
 
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
+
 const lineMaterialNew = new THREE.LineBasicMaterial({
   color: 0xff0000,
 })
@@ -32,6 +34,9 @@ const lineMaterialOld = new THREE.LineBasicMaterial({
 
 const CircuitParticlesInstancedMeshes = () => {
   const { scene, viewport, gl } = useThree()
+
+  const [iMeshCount, setIMeshCount] = useState(null)
+  let trueLinePointsArray = useRef([])
 
   let iMeshRef = useRef(null)
 
@@ -52,16 +57,13 @@ const CircuitParticlesInstancedMeshes = () => {
         (prevPoint.x === currPoint.x && startPoint.x === prevPoint.x) ||
         (prevPoint.y === currPoint.y && startPoint.y === prevPoint.y)
       ) {
-        // Continue in the same direction
         continue
       } else {
-        // Direction change, create a line segment from startPoint to prevPoint
         lines.push({ start: startPoint, end: prevPoint })
         startPoint = prevPoint
       }
     }
 
-    // Add the last line segment
     lines.push({ start: startPoint, end: points[points.length - 1] })
 
     return lines
@@ -70,93 +72,22 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    // console.log(circuitVertices)
-
-    let separatedArray = []
-
-    // const singleLine = addLines(circuitVertices[0])
-
-    let trueLinePointsArray = []
+    let trueLinesCount = 0
 
     let oldLines = []
-
     let newLines = []
 
-    let numOfTrueLines = 0
-    let currentOrientation = 'vertical'
-    let prevOrientation = 'vertical'
-
-    circuitVertices.forEach((pathArray, index) => {
-      // if (index !== 392) {
-      //   //line 392 exhibits the diagonal glitch
-      //   return
-      // }
-
-      console.log(pathArray)
-
+    circuitVertices.forEach((pathArray) => {
       oldLines.push(addLines(pathArray, lineMaterialOld))
 
-      // const p1 = pathArray[0]
-      // const p2 = pathArray[1]
+      let lines = consolidateLines(pathArray)
 
-      // if (p1.x === p2.x) {
-      //   prevOrientation = 'vertical'
-      // } else if (p1.y === p2.y) {
-      //   prevOrientation = 'horizontal'
-      // }
+      trueLinesCount += lines.length
 
-      // console.log(prevOrientation)
-
-      // let pivotIndex = 0
-      // for (let i = 2; i < pathArray.length; i++) {
-      //   if (i === pathArray.length - 1) {
-      //     let subArray = pathArray.slice(pivotIndex)
-      //     if (subArray.length === 1) {
-      //       subArray.unshift(pathArray[i - 2])
-      //     }
-      //     trueLinePointsArray.push(subArray)
-      //     numOfTrueLines++
-      //   } else {
-      //     const p1 = pathArray[i]
-      //     const p2 = pathArray[i + 1]
-
-      //     if (p1.x === p2.x) {
-      //       currentOrientation = 'vertical'
-      //     } else if (p1.y === p2.y) {
-      //       currentOrientation = 'horizontal'
-      //     }
-
-      //     console.log({ currentOrientation }, i)
-      //     console.log({ prevOrientation }, i)
-
-      //     if (currentOrientation !== prevOrientation) {
-      //       numOfTrueLines++
-
-      //       console.log('direction changed', i)
-
-      //       let subArray = pathArray.slice(pivotIndex, i)
-      //       if (subArray.length === 1) {
-      //         subArray.unshift(pathArray[i - 2])
-      //       }
-      //       console.log(subArray)
-
-      //       trueLinePointsArray.push(subArray)
-
-      //       pivotIndex = i
-      //     }
-
-      //     prevOrientation = currentOrientation
-      //   }
-      // }
-
-      trueLinePointsArray.push(consolidateLines(pathArray))
+      trueLinePointsArray.current.push(lines)
     })
 
-    console.log(trueLinePointsArray)
-
-    // console.log(numOfTrueLines)
-
-    newLines = trueLinePointsArray.map((linesArray) => {
+    newLines = trueLinePointsArray.current.map((linesArray) => {
       let lines = []
       linesArray.forEach((line) => {
         lines.push(addLinesNew(line, lineMaterialNew))
@@ -164,11 +95,12 @@ const CircuitParticlesInstancedMeshes = () => {
       return lines
     })
 
+    setIMeshCount(trueLinesCount)
+
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
-      // scene.remove(singleLine)
       if (newLines.length) {
         newLines.forEach((line) => {
           scene.remove(line)
@@ -181,6 +113,41 @@ const CircuitParticlesInstancedMeshes = () => {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!iMeshCount) return
+
+    let iMeshIndex = 0
+
+    trueLinePointsArray.current.map((lines) => {
+      lines.forEach((line) => {
+        let start = line.start
+        let end = line.end
+
+        if (start.y === end.y) {
+          let scaleFactor = (end.x - start.x) / xGap
+
+          console.log(scaleFactor)
+
+          dummyObj3D.position.set(
+            start.x + (xGap * scaleFactor) / 2,
+            start.y,
+            0
+          )
+          dummyObj3D.scale.set(scaleFactor, 1, 1)
+
+          dummyObj3D.updateMatrix()
+
+          iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+        } else if (start.x === end.x) {
+          // console.log('vertical')
+        }
+        iMeshIndex++
+        // console.log(line)
+      })
+    })
+    iMeshRef.current.instanceMatrix.needsUpdate = true
+  }, [iMeshCount])
 
   const addLines = (vertices, lineMaterial) => {
     let points = []
@@ -201,8 +168,6 @@ const CircuitParticlesInstancedMeshes = () => {
   }
 
   const addLinesNew = (linePoints, lineMaterial) => {
-    console.log(linePoints)
-
     let points = []
 
     points.push(
@@ -216,8 +181,6 @@ const CircuitParticlesInstancedMeshes = () => {
 
     return line
   }
-
-  useFrame(({ clock }) => {})
 
   return (
     <>
@@ -234,6 +197,14 @@ const CircuitParticlesInstancedMeshes = () => {
           opacity={0.05}
         />
       </Plane>
+
+      <instancedMesh
+        ref={iMeshRef}
+        args={[null, null, iMeshCount]}
+      >
+        <boxGeometry args={[xGap, LINE_WIDTH, 0]} />
+        <meshBasicMaterial />
+      </instancedMesh>
     </>
   )
 }
