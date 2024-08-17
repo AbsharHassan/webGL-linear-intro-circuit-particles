@@ -15,6 +15,9 @@ import gsap from 'gsap'
 import { circuitVertices } from '../circuitVertices'
 import { degToRad } from 'three/src/math/MathUtils.js'
 
+import testVertex from '../shaders/testVertex.glsl'
+import testFragment from '../shaders/testFragment.glsl'
+
 const heightSegments = 64
 const widthSegments = 64
 const gridWidth = 2
@@ -75,25 +78,10 @@ const CircuitParticlesInstancedMeshes = () => {
 
     let trueLinesCount = 0
 
-    let oldLines = []
-    let newLines = []
-
     circuitVertices.forEach((pathArray) => {
-      oldLines.push(addLines(pathArray, lineMaterialOld))
-
       let lines = consolidateLines(pathArray)
-
       trueLinesCount += lines.length
-
       trueLinePointsArray.current.push(lines)
-    })
-
-    newLines = trueLinePointsArray.current.map((linesArray) => {
-      let lines = []
-      linesArray.forEach((line) => {
-        lines.push(addLinesNew(line, lineMaterialNew))
-      })
-      return lines
     })
 
     setIMeshCount(trueLinesCount)
@@ -101,22 +89,25 @@ const CircuitParticlesInstancedMeshes = () => {
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
-    return () => {
-      if (newLines.length) {
-        newLines.forEach((line) => {
-          scene.remove(line)
-        })
-      }
-      if (oldLines.length) {
-        oldLines.forEach((line) => {
-          scene.remove(line)
-        })
-      }
-    }
+    return () => {}
   }, [])
 
   useEffect(() => {
     if (!iMeshCount) return
+
+    let tempFloat32Array = new Float32Array(iMeshCount * 3)
+
+    for (let i = 0; i < iMeshCount; i++) {
+      tempFloat32Array.set(
+        [Math.random() * 2 - 1, Math.random() - 0.5, 0],
+        i * 3
+      )
+    }
+
+    iMeshRef.current.geometry.setAttribute(
+      'pos',
+      new THREE.InstancedBufferAttribute(tempFloat32Array, 3)
+    )
 
     let iMeshIndex = 0
 
@@ -137,7 +128,6 @@ const CircuitParticlesInstancedMeshes = () => {
           )
           dummyObj3D.rotation.set(0, 0, degToRad(0))
           dummyObj3D.scale.set(scaleFactor, 1, 1)
-
           dummyObj3D.updateMatrix()
 
           iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
@@ -151,53 +141,18 @@ const CircuitParticlesInstancedMeshes = () => {
               Math.sign(scaleFactor) * (LINE_WIDTH / 2),
             0
           )
-
           dummyObj3D.scale.set(scaleFactor, 1, 1)
-
           dummyObj3D.rotation.set(0, 0, degToRad(90))
-
           dummyObj3D.updateMatrix()
+
           iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
         }
         iMeshIndex++
-        // console.log(line)
       })
     })
+
     iMeshRef.current.instanceMatrix.needsUpdate = true
   }, [iMeshCount])
-
-  const addLines = (vertices, lineMaterial) => {
-    let points = []
-
-    vertices.forEach((vertex) => {
-      let z = 0
-      if (lineMaterial.color.r === 1) {
-        z = 0.0006
-      }
-      points.push(new THREE.Vector3(vertex.x, vertex.y, z))
-    })
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const line = new THREE.Line(geometry, lineMaterial)
-    scene.add(line)
-
-    return line
-  }
-
-  const addLinesNew = (linePoints, lineMaterial) => {
-    let points = []
-
-    points.push(
-      new THREE.Vector3(linePoints.start.x, linePoints.start.y, 0.0006)
-    )
-    points.push(new THREE.Vector3(linePoints.end.x, linePoints.end.y, 0.0006))
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const line = new THREE.Line(geometry, lineMaterial)
-    scene.add(line)
-
-    return line
-  }
 
   return (
     <>
@@ -220,7 +175,15 @@ const CircuitParticlesInstancedMeshes = () => {
         args={[null, null, iMeshCount]}
       >
         <boxGeometry args={[xGap, LINE_WIDTH, 0]} />
-        <meshBasicMaterial />
+        {/* <meshBasicMaterial
+          transparent
+          opacity={0.4}
+        /> */}
+
+        <shaderMaterial
+          vertexShader={testVertex}
+          fragmentShader={testFragment}
+        />
       </instancedMesh>
     </>
   )
