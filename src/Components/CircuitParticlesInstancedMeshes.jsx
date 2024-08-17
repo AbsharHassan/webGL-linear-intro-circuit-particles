@@ -95,20 +95,6 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     if (!iMeshCount) return
 
-    let tempFloat32Array = new Float32Array(iMeshCount * 3)
-
-    for (let i = 0; i < iMeshCount; i++) {
-      tempFloat32Array.set(
-        [Math.random() * 2 - 1, Math.random() - 0.5, 0],
-        i * 3
-      )
-    }
-
-    iMeshRef.current.geometry.setAttribute(
-      'pos',
-      new THREE.InstancedBufferAttribute(tempFloat32Array, 3)
-    )
-
     let iMeshIndex = 0
 
     trueLinePointsArray.current.map((lines) => {
@@ -183,6 +169,8 @@ const CircuitParticlesInstancedMeshes = () => {
         <shaderMaterial
           vertexShader={testVertex}
           fragmentShader={testFragment}
+          depthTest={false}
+          depthWrite={false}
         />
       </instancedMesh>
     </>
