@@ -13,6 +13,7 @@ import {
 import gsap from 'gsap'
 
 import { circuitVertices } from '../circuitVertices'
+import { degToRad } from 'three/src/math/MathUtils.js'
 
 const heightSegments = 64
 const widthSegments = 64
@@ -127,20 +128,36 @@ const CircuitParticlesInstancedMeshes = () => {
         if (start.y === end.y) {
           let scaleFactor = (end.x - start.x) / xGap
 
-          console.log(scaleFactor)
-
           dummyObj3D.position.set(
-            start.x + (xGap * scaleFactor) / 2,
+            start.x +
+              (xGap * scaleFactor) / 2 +
+              Math.sign(scaleFactor) * (LINE_WIDTH / 2),
             start.y,
             0
           )
+          dummyObj3D.rotation.set(0, 0, degToRad(0))
           dummyObj3D.scale.set(scaleFactor, 1, 1)
 
           dummyObj3D.updateMatrix()
 
           iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
         } else if (start.x === end.x) {
-          // console.log('vertical')
+          let scaleFactor = (end.y - start.y) / xGap
+
+          dummyObj3D.position.set(
+            start.x,
+            start.y +
+              (xGap * scaleFactor) / 2 +
+              Math.sign(scaleFactor) * (LINE_WIDTH / 2),
+            0
+          )
+
+          dummyObj3D.scale.set(scaleFactor, 1, 1)
+
+          dummyObj3D.rotation.set(0, 0, degToRad(90))
+
+          dummyObj3D.updateMatrix()
+          iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
         }
         iMeshIndex++
         // console.log(line)
