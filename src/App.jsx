@@ -12,6 +12,7 @@ import TestFadePlane from './Components/TestFadePlane'
 import CircuitParticlesScene from './Components/CircuitParticlesScene'
 import CircuitShaderParticlesScene from './Components/CircuitShaderParticlesScene'
 import CircuitParticlesInstancedMeshes from './Components/CircuitParticlesInstancedMeshes'
+import CircuitMeshUv1 from './Components/CircuitMeshUv1'
 
 function App() {
   let mousePosition = useRef({ x: 0, y: 0 })
@@ -72,6 +73,9 @@ function App() {
       {/* <CircuitParticlesScene /> */}
       {/* <CircuitShaderParticlesScene /> */}
       <CircuitParticlesInstancedMeshes />
+      {/* <axesHelper /> */}
+      {/* <OrbitControls /> */}
+      {/* <CircuitMeshUv1 /> */}
     </Canvas>
   )
 }
