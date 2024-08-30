@@ -13,6 +13,7 @@ import {
 import gsap from 'gsap'
 
 import { circuitVertices } from '../circuitVertices'
+import { optimizedVerticesV1 as optimizedVertices } from '../optimizedCircuitVerticesV1'
 import { degToRad } from 'three/src/math/MathUtils.js'
 
 import iMeshCircuitLinesFragShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
@@ -33,7 +34,7 @@ const lineMaterialNew = new THREE.LineBasicMaterial({
   color: 0xff0000,
 })
 const lineMaterialOld = new THREE.LineBasicMaterial({
-  color: 0x00ffff,
+  color: 0xff0000,
 })
 
 const CircuitParticlesInstancedMeshes = () => {
@@ -44,138 +45,23 @@ const CircuitParticlesInstancedMeshes = () => {
 
   let iMeshRef = useRef(null)
 
-  let someCount = useRef(0)
-
   let arrayForPython = useMemo(() => {
     return []
   }, [])
 
-  function consolidateLines(points) {
-    const lines = []
-
-    if (points.length < 2) {
-      return lines
-    }
-
-    let startPoint = points[0]
-
-    for (let i = 1; i < points.length; i++) {
-      const prevPoint = points[i - 1]
-      const currPoint = points[i]
-
-      if (i)
-        if (
-          (prevPoint.x === currPoint.x && startPoint.x === prevPoint.x) ||
-          (prevPoint.y === currPoint.y && startPoint.y === prevPoint.y)
-        ) {
-          continue
-        } else {
-          lines.push({ start: startPoint, end: prevPoint })
-          startPoint = prevPoint
-          someCount.current = someCount.current + 1
-        }
-    }
-
-    lines.push({ start: startPoint, end: points[points.length - 1] })
-
-    return lines
-  }
-
-  function consolidateLinesForPython(points) {
-    const lines = []
-
-    if (points.length < 2) {
-      return lines
-    }
-
-    let startPoint = points[0]
-
-    lines.push(startPoint)
-
-    for (let i = 1; i < points.length; i++) {
-      const prevPoint = points[i - 1]
-      const currPoint = points[i]
-
-      if (
-        (prevPoint.x === currPoint.x && startPoint.x === prevPoint.x) ||
-        (prevPoint.y === currPoint.y && startPoint.y === prevPoint.y)
-      ) {
-        continue
-      } else {
-        // lines.push({ start: startPoint, end: prevPoint })
-
-        // console.log(prevPoint)
-        lines.push(prevPoint)
-
-        startPoint = prevPoint
-      }
-    }
-
-    // add the last point
-    const endPoint = points[points.length - 1]
-    lines.push(endPoint)
-
-    return lines
-  }
-
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    let trueLinesCount = 0
-
     let oldLines = []
-    let newLines = []
 
-    // circuitVertices.forEach((pathArray) => {
-    //   //
-    //   // oldLines.push(addLines(pathArray, lineMaterialOld))
-    //   //
-    //   let lines = consolidateLines(pathArray)
-    //   trueLinesCount += lines.length
-    //   trueLinePointsArray.current.push(lines)
-    // })
-
-    circuitVertices.forEach((pathArray, index) => {
-      if (index !== 0) {
-        // return
-      }
-
-      // console.log(pathArray)
-
+    optimizedVertices.forEach((pathArray) => {
       oldLines.push(addLines(pathArray, lineMaterialOld))
-      let lines = consolidateLinesForPython(pathArray)
-      arrayForPython.push(lines)
     })
-
-    console.log(arrayForPython)
-
-    newLines = arrayForPython.map((linesArray) => {
-      let lines = []
-      // console.log(linesArray)
-      lines.push(addLinesPython(linesArray, lineMaterialNew))
-
-      return lines
-    })
-
-    setIMeshCount(trueLinesCount)
-
-    // newLines = trueLinePointsArray.current.map((linesArray) => {
-    //   let lines = []
-    //   linesArray.forEach((line) => {
-    //     lines.push(addLinesNew(line, lineMaterialNew))
-    //   })
-    //   return lines
-    // })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
 
     return () => {
-      if (newLines.length) {
-        newLines.forEach((line) => {
-          scene.remove(line)
-        })
-      }
       if (oldLines.length) {
         oldLines.forEach((line) => {
           scene.remove(line)
@@ -188,11 +74,7 @@ const CircuitParticlesInstancedMeshes = () => {
     let points = []
 
     vertices.forEach((vertex) => {
-      let z = 0
-      if (lineMaterial.color.r === 1) {
-        z = 0.0006
-      }
-      points.push(new THREE.Vector3(vertex.x, vertex.y, z))
+      points.push(new THREE.Vector3(vertex[0], vertex[1], 0))
     })
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points)
@@ -201,87 +83,6 @@ const CircuitParticlesInstancedMeshes = () => {
 
     return line
   }
-
-  const addLinesNew = (linePoints, lineMaterial) => {
-    let points = []
-
-    points.push(
-      new THREE.Vector3(linePoints.start.x, linePoints.start.y, 0.0006)
-    )
-    points.push(new THREE.Vector3(linePoints.end.x, linePoints.end.y, 0.0006))
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const line = new THREE.Line(geometry, lineMaterial)
-    scene.add(line)
-
-    return line
-  }
-
-  const addLinesPython = (vertices, lineMaterial) => {
-    let points = []
-
-    vertices.forEach((vertex) => {
-      let z = 0
-      if (lineMaterial.color.r === 1) {
-        z = 0.0006
-      }
-      points.push(new THREE.Vector3(vertex.x, vertex.y, z))
-    })
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const line = new THREE.Line(geometry, lineMaterial)
-    scene.add(line)
-
-    return line
-  }
-
-  // useEffect(() => {
-  //   if (!iMeshCount) return
-
-  //   let iMeshIndex = 0
-
-  //   trueLinePointsArray.current.map((lines) => {
-  //     lines.forEach((line) => {
-  //       let start = line.start
-  //       let end = line.end
-
-  //       if (start.y === end.y) {
-  //         let scaleFactor = (end.x - start.x) / xGap
-
-  //         dummyObj3D.position.set(
-  //           start.x +
-  //             (xGap * scaleFactor) / 2 +
-  //             Math.sign(scaleFactor) * (LINE_WIDTH / 2),
-  //           start.y,
-  //           0
-  //         )
-  //         dummyObj3D.rotation.set(0, 0, degToRad(0))
-  //         dummyObj3D.scale.set(scaleFactor, 1, 1)
-  //         dummyObj3D.updateMatrix()
-
-  //         iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
-  //       } else if (start.x === end.x) {
-  //         let scaleFactor = (end.y - start.y) / xGap
-
-  //         dummyObj3D.position.set(
-  //           start.x,
-  //           start.y +
-  //             (xGap * scaleFactor) / 2 +
-  //             Math.sign(scaleFactor) * (LINE_WIDTH / 2),
-  //           0
-  //         )
-  //         dummyObj3D.scale.set(scaleFactor, 1, 1)
-  //         dummyObj3D.rotation.set(0, 0, degToRad(90))
-  //         dummyObj3D.updateMatrix()
-
-  //         iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
-  //       }
-  //       iMeshIndex++
-  //     })
-  //   })
-
-  //   iMeshRef.current.instanceMatrix.needsUpdate = true
-  // }, [iMeshCount])
 
   return (
     <>
@@ -298,24 +99,6 @@ const CircuitParticlesInstancedMeshes = () => {
           opacity={0.05}
         />
       </Plane>
-
-      <instancedMesh
-        ref={iMeshRef}
-        args={[null, null, iMeshCount]}
-      >
-        <boxGeometry args={[xGap, LINE_WIDTH, 0]} />
-        {/* <meshBasicMaterial
-          transparent
-          opacity={0.4}
-        /> */}
-
-        <shaderMaterial
-          vertexShader={iMeshCircuitLinesVertShader}
-          fragmentShader={iMeshCircuitLinesFragShader}
-          depthTest={false}
-          depthWrite={false}
-        />
-      </instancedMesh>
     </>
   )
 }
