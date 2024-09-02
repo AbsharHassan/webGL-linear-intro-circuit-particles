@@ -16,6 +16,7 @@ import { circuitVertices } from '../circuitVertices'
 // import { experiment } from '../experiment'
 import { optimizedVerticesV1 } from '../optimizedCircuitVerticesV1'
 import { optimizedVerticesV2 } from '../optimizedCircuitVerticesV2'
+import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
 import { degToRad } from 'three/src/math/MathUtils.js'
 
 import iMeshCircuitLinesFragShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
@@ -29,6 +30,9 @@ const gridHeight = 1.5
 const xGap = gridWidth / widthSegments
 const yGap = gridHeight / heightSegments
 const LINE_WIDTH = 0.0125
+
+// console.log({xGap});
+// console.log({yGap});
 
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
@@ -79,7 +83,7 @@ const CircuitParticlesInstancedMeshes = () => {
     //   oldLines.push(addLines(pathArray, lineMaterialOld))
     // })
 
-    optimizedVerticesV2.map((pathArray, index) => {
+    optimizedVerticesV3.map((pathArray, index) => {
       // if (index !== 0) {
       //   return
       // }
