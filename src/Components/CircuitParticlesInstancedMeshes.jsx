@@ -13,7 +13,7 @@ import {
 import gsap from 'gsap'
 
 import { circuitVertices } from '../circuitVertices'
-// import { experiment } from '../experiment'
+import { experiment } from '../experiment'
 import { optimizedVerticesV1 } from '../optimizedCircuitVerticesV1'
 import { optimizedVerticesV2 } from '../optimizedCircuitVerticesV2'
 import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
@@ -67,12 +67,12 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    let arrayLengths = noiseVerticesV1.map((arr) => arr.length)
+    let arrayLengths = experiment.map((arr) => arr.length)
     const maxLength = Math.max(...arrayLengths)
 
     setIMeshCount(maxLength * (POINTS_PER_PATH + 1))
 
-    let allPaths = noiseVerticesV1.map((frameArray) => {
+    let allPaths = experiment.map((frameArray) => {
       let paths = frameArray.map((vertices) => {
         let vec2Array = vertices.map(
           (coords) => new THREE.Vector2(coords[0], coords[1])
