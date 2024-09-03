@@ -19,6 +19,8 @@ import { optimizedVerticesV2 } from '../optimizedCircuitVerticesV2'
 import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
 import { degToRad } from 'three/src/math/MathUtils.js'
 
+import { noiseVerticesV1 } from '../noiseVertices80v1'
+
 import iMeshCircuitLinesFragShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
 import iMeshCircuitLinesVertShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesVertex.glsl'
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
@@ -30,9 +32,6 @@ const gridHeight = 1.5
 const xGap = gridWidth / widthSegments
 const yGap = gridHeight / heightSegments
 const LINE_WIDTH = 0.0125
-
-// console.log({xGap});
-// console.log({yGap});
 
 let vec = new THREE.Vector3()
 const dummyObj3D = new THREE.Object3D()
@@ -57,7 +56,8 @@ const CircuitParticlesInstancedMeshes = () => {
   const { scene, viewport, gl } = useThree()
 
   const [iMeshCount, setIMeshCount] = useState(null)
-  let trueLinePointsArray = useRef([])
+
+  let lineMeshs = useMemo(() => [], [])
 
   let iMeshRef = useRef(null)
 
@@ -68,14 +68,12 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    // console.log(experiment)
+    console.log(noiseVerticesV1)
 
-    // setTimeout(() => {
-    //   console.log('start')
-    //   iterateNoiseLines()
-    // }, 5000)
-
-    let lineMeshs = []
+    setTimeout(() => {
+      console.log('start')
+      iterateNoiseLines(noiseVerticesV1)
+    }, 5000)
 
     let oldLines = []
 
@@ -83,20 +81,20 @@ const CircuitParticlesInstancedMeshes = () => {
     //   oldLines.push(addLines(pathArray, lineMaterialOld))
     // })
 
-    optimizedVerticesV3.map((pathArray, index) => {
-      // if (index !== 0) {
-      //   return
-      // }
+    // optimizedVerticesV3.map((pathArray, index) => {
+    //   // if (index !== 0) {
+    //   //   return
+    //   // }
 
-      const meshLineGeo = new MeshLineGeometry()
-      // const linePoints = vertices.map(({ x, y }) => [x, y])
-      meshLineGeo.setPoints(pathArray)
-      const meshLineMesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+    //   const meshLineGeo = new MeshLineGeometry()
+    //   // const linePoints = vertices.map(({ x, y }) => [x, y])
+    //   meshLineGeo.setPoints(pathArray)
+    //   const meshLineMesh = new THREE.Mesh(meshLineGeo, meshLineMat)
 
-      scene.add(meshLineMesh)
+    //   scene.add(meshLineMesh)
 
-      lineMeshs.push(meshLineMesh)
-    })
+    //   lineMeshs.push(meshLineMesh)
+    // })
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -115,34 +113,52 @@ const CircuitParticlesInstancedMeshes = () => {
     }
   }, [])
 
-  // const iterateNoiseLines = () => {
-  //   const progress = {
-  //     i: 1,
-  //   }
+  const iterateNoiseLines = (framesArray) => {
+    const progress = {
+      i: 1,
+    }
 
-  //   let lines = []
+    const endIndex = framesArray.length - 1
 
-  //   gsap.to(progress, {
-  //     i: 400,
-  //     duration: 20,
-  //     ease: 'linear',
-  //     onUpdate: () => {
-  //       if (lines.length) {
-  //         lines.forEach((line) => {
-  //           scene.remove(line)
-  //         })
-  //       }
+    let meshLines = []
 
-  //       let index = Math.floor(progress.i)
-  //       console.log(index)
-  //       let vertices = experiment[index - 1]
+    let prevIndex = -1
 
-  //       vertices.forEach((pathArray) => {
-  //         lines.push(addLines(pathArray, lineMaterialOld))
-  //       })
-  //     },
-  //   })
-  // }
+    gsap.to(progress, {
+      i: endIndex,
+      duration: 1,
+      ease: 'linear',
+      onUpdate: () => {
+        let index = Math.floor(progress.i)
+
+        if (index === prevIndex) {
+          return
+        }
+
+        if (meshLines.length) {
+          meshLines.forEach((line) => {
+            scene.remove(line)
+          })
+        }
+
+        console.log(index)
+
+        let vertices = framesArray[index]
+
+        vertices.forEach((pathArray) => {
+          const meshLineGeo = new MeshLineGeometry()
+          meshLineGeo.setPoints(pathArray)
+
+          const meshLineMesh = new THREE.Mesh(meshLineGeo, meshLineMat)
+          scene.add(meshLineMesh)
+
+          meshLines.push(meshLineMesh)
+        })
+
+        prevIndex = index
+      },
+    })
+  }
 
   const addLines = (vertices, lineMaterial) => {
     let points = []
