@@ -23,6 +23,10 @@ import { noiseVerticesV1 } from '../noiseVertices80v1'
 
 import iMeshCircuitLinesFragShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
 import iMeshCircuitLinesVertShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesVertex.glsl'
+
+import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuitParticlesFragment.glsl'
+import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
+
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 
 const POINTS_PER_PATH = 100
@@ -63,6 +67,14 @@ const CircuitParticlesInstancedMeshes = () => {
   let lineMeshs = useMemo(() => [], [])
 
   let iMeshRef = useRef(null)
+
+  const particleUniforms = useMemo(() => {
+    return {
+      uOpacity: {
+        value: 1,
+      },
+    }
+  }, [])
 
   useEffect(() => {
     const startTime = performance.now() // Start timing
@@ -113,8 +125,16 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     if (!iMeshCount || !framePaths) return
 
+    let opacityArray = new Float32Array(iMeshCount)
+    for (let i = 0; i < opacityArray.length; i++) {
+      opacityArray[i] = (Math.random() + 0.2) / 20
+    }
+    iMeshRef.current.geometry.setAttribute(
+      'aOpacity',
+      new THREE.InstancedBufferAttribute(opacityArray, 1, false)
+    )
+
     iterateNoiseLines(framePaths)
-    // updatePoints(firstFrame)
   }, [iMeshCount, framePaths])
 
   const iterateNoiseLines = (framePaths) => {
@@ -130,18 +150,14 @@ const CircuitParticlesInstancedMeshes = () => {
       i: endIndex,
       delay: 3,
       duration: 5,
+      yoyo: true,
+      repeat: -1,
       ease: 'power1.inOut',
       onUpdate: () => {
         let index = Math.floor(progress.i)
-
-        if (index === prevIndex) {
-          return
-        }
-
-        console.log(index)
+        if (index === prevIndex) return
 
         let frame = framePaths[index]
-
         updatePoints(frame)
 
         prevIndex = index
@@ -169,8 +185,8 @@ const CircuitParticlesInstancedMeshes = () => {
         ref={iMeshRef}
         args={[null, null, iMeshCount]}
       >
-        <boxGeometry args={[0.05 * 0.02, 0.05 * 0.02, 0]} />
-        {/* <shaderMaterial
+        <boxGeometry args={[0.05 * 0.25, 0.05 * 0.25, 0]} />
+        <shaderMaterial
           vertexShader={circuitParticlesVertex}
           fragmentShader={circuitParticlesFragment}
           uniforms={particleUniforms}
@@ -178,8 +194,7 @@ const CircuitParticlesInstancedMeshes = () => {
           depthTest={false}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
-        /> */}
-        <meshBasicMaterial />
+        />
       </instancedMesh>
     </>
   )
