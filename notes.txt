@@ -27,6 +27,7 @@ intro circuit lines:
 
     noise movement:
         slow and buggy. Asset too large. Try detecting and eliminating overlaps in python and manually adding more particles where necessary
+        incorporate 'disortion' input too in the noise keyframes generated from blender
 
 
 OTHER STUFF:

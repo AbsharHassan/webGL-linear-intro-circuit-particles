@@ -13,23 +13,11 @@ import {
 import gsap from 'gsap'
 
 import { circuitVertices } from '../circuitVertices'
-import { experiment } from '../experiment'
-import { optimizedVerticesV1 } from '../optimizedCircuitVerticesV1'
-import { optimizedVerticesV2 } from '../optimizedCircuitVerticesV2'
-import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
 import { degToRad } from 'three/src/math/MathUtils.js'
 
-import { noiseVerticesV1 } from '../noiseVertices80v1'
-
-import iMeshCircuitLinesFragShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
-import iMeshCircuitLinesVertShader from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesVertex.glsl'
-
-import circuitParticlesFragment from '../shaders/circuitParticlesShaders/circuitParticlesFragment.glsl'
-import circuitParticlesVertex from '../shaders/circuitParticlesShaders/circuitParticlesVertex.glsl'
-
-import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
-
-const POINTS_PER_PATH = 100
+import iMeshCircuitLinesFrag from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
+import iMeshCircuitLinesVert from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesVertex.glsl'
+import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
 
 const heightSegments = 64
 const widthSegments = 64
@@ -46,57 +34,77 @@ const lineMaterialNew = new THREE.LineBasicMaterial({
   color: 0xff0000,
 })
 const lineMaterialOld = new THREE.LineBasicMaterial({
-  color: 0xff0000,
-})
-
-const meshLineMat = new MeshLineMaterial({
-  lineWidth: 0.0125,
-  transparent: true,
-  depthTest: false,
-  depthWrite: false,
-  opacity: 0.4,
-  // fragmentShader: circuitLinesFragment,
+  color: 0x00ffff,
 })
 
 const CircuitParticlesInstancedMeshes = () => {
   const { scene, viewport, gl } = useThree()
 
   const [iMeshCount, setIMeshCount] = useState(null)
-  const [framePaths, setFramePaths] = useState(null)
-
-  let lineMeshs = useMemo(() => [], [])
+  let trueLinePointsArray = useRef([])
 
   let iMeshRef = useRef(null)
 
-  const particleUniforms = useMemo(() => {
-    return {
-      uOpacity: {
-        value: 1,
-      },
+  function consolidateLines(points) {
+    const lines = []
+
+    if (points.length < 2) {
+      return lines
     }
-  }, [])
+
+    let startPoint = points[0]
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1]
+      const currPoint = points[i]
+
+      if (
+        (prevPoint.x === currPoint.x && startPoint.x === prevPoint.x) ||
+        (prevPoint.y === currPoint.y && startPoint.y === prevPoint.y)
+      ) {
+        continue
+      } else {
+        lines.push({ start: startPoint, end: prevPoint })
+        startPoint = prevPoint
+      }
+    }
+
+    lines.push({ start: startPoint, end: points[points.length - 1] })
+
+    return lines
+  }
 
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    let arrayLengths = experiment.map((arr) => arr.length)
-    const maxLength = Math.max(...arrayLengths)
+    console.log(optimizedVerticesV3)
+    console.log(circuitVertices)
 
-    setIMeshCount(maxLength * (POINTS_PER_PATH + 1))
-
-    let allPaths = experiment.map((frameArray) => {
-      let paths = frameArray.map((vertices) => {
-        let vec2Array = vertices.map(
-          (coords) => new THREE.Vector2(coords[0], coords[1])
-        )
-
-        return new THREE.Path(vec2Array)
+    let oldStructureVertices = optimizedVerticesV3.map((pathArray) => {
+      let tempArray1 = pathArray.map((coord) => {
+        return { x: coord[0], y: coord[1] }
       })
 
-      return paths
+      return tempArray1
     })
 
-    setFramePaths(allPaths)
+    console.log(oldStructureVertices)
+
+    let trueLinesCount = 0
+
+    // circuitVertices.forEach((pathArray) => {
+    //   let lines = consolidateLines(pathArray)
+    //   trueLinesCount += lines.length
+    //   trueLinePointsArray.current.push(lines)
+    // })
+
+    oldStructureVertices.forEach((pathArray) => {
+      let lines = consolidateLines(pathArray)
+      trueLinesCount += lines.length
+      trueLinePointsArray.current.push(lines)
+    })
+
+    setIMeshCount(trueLinesCount)
 
     const endTime = performance.now() // End timing
     console.log(`useEffect took ${endTime - startTime} milliseconds`)
@@ -104,66 +112,67 @@ const CircuitParticlesInstancedMeshes = () => {
     return () => {}
   }, [])
 
-  const updatePoints = (frame) => {
-    let iMeshIndex = 0
-
-    frame.map((path) => {
-      const pointsArray = path.getSpacedPoints(POINTS_PER_PATH)
-
-      pointsArray.map((point) => {
-        dummyObj3D.position.set(point.x, point.y, 0)
-        dummyObj3D.updateMatrix()
-        iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
-
-        iMeshIndex++
-      })
-
-      iMeshRef.current.instanceMatrix.needsUpdate = true
-    })
-  }
-
   useEffect(() => {
-    if (!iMeshCount || !framePaths) return
+    if (!iMeshCount) return
 
-    let opacityArray = new Float32Array(iMeshCount)
-    for (let i = 0; i < opacityArray.length; i++) {
-      opacityArray[i] = (Math.random() + 0.2) / 20
+    let tempFloat32Array = new Float32Array(iMeshCount * 3)
+
+    for (let i = 0; i < iMeshCount; i++) {
+      tempFloat32Array.set(
+        [Math.random() * 2 - 1, Math.random() - 0.5, 0],
+        i * 3
+      )
     }
+
     iMeshRef.current.geometry.setAttribute(
-      'aOpacity',
-      new THREE.InstancedBufferAttribute(opacityArray, 1, false)
+      'pos',
+      new THREE.InstancedBufferAttribute(tempFloat32Array, 3)
     )
 
-    iterateNoiseLines(framePaths)
-  }, [iMeshCount, framePaths])
+    let iMeshIndex = 0
 
-  const iterateNoiseLines = (framePaths) => {
-    const progress = {
-      i: 1,
-    }
+    trueLinePointsArray.current.map((lines) => {
+      lines.forEach((line) => {
+        let start = line.start
+        let end = line.end
 
-    const endIndex = framePaths.length - 1
+        if (start.y === end.y) {
+          let scaleFactor = (end.x - start.x) / xGap
 
-    let prevIndex = -1
+          dummyObj3D.position.set(
+            start.x +
+              (xGap * scaleFactor) / 2 +
+              Math.sign(scaleFactor) * (LINE_WIDTH / 2),
+            start.y,
+            0
+          )
+          dummyObj3D.rotation.set(0, 0, degToRad(0))
+          dummyObj3D.scale.set(scaleFactor, 1, 1)
+          dummyObj3D.updateMatrix()
 
-    gsap.to(progress, {
-      i: endIndex,
-      delay: 3,
-      duration: 5,
-      yoyo: true,
-      repeat: -1,
-      ease: 'power1.inOut',
-      onUpdate: () => {
-        let index = Math.floor(progress.i)
-        if (index === prevIndex) return
+          iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+        } else if (start.x === end.x) {
+          let scaleFactor = (end.y - start.y) / xGap
 
-        let frame = framePaths[index]
-        updatePoints(frame)
+          dummyObj3D.position.set(
+            start.x,
+            start.y +
+              (xGap * scaleFactor) / 2 +
+              Math.sign(scaleFactor) * (LINE_WIDTH / 2),
+            0
+          )
+          dummyObj3D.scale.set(scaleFactor, 1, 1)
+          dummyObj3D.rotation.set(0, 0, degToRad(90))
+          dummyObj3D.updateMatrix()
 
-        prevIndex = index
-      },
+          iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
+        }
+        iMeshIndex++
+      })
     })
-  }
+
+    iMeshRef.current.instanceMatrix.needsUpdate = true
+  }, [iMeshCount])
 
   return (
     <>
@@ -172,7 +181,7 @@ const CircuitParticlesInstancedMeshes = () => {
 
       <Plane
         args={[gridWidth, gridHeight, widthSegments, heightSegments]}
-        visible={false}
+        // visible={false}
       >
         <meshBasicMaterial
           wireframe
@@ -185,15 +194,15 @@ const CircuitParticlesInstancedMeshes = () => {
         ref={iMeshRef}
         args={[null, null, iMeshCount]}
       >
-        <boxGeometry args={[0.05 * 0.25, 0.05 * 0.25, 0]} />
-        <shaderMaterial
-          vertexShader={circuitParticlesVertex}
-          fragmentShader={circuitParticlesFragment}
-          uniforms={particleUniforms}
+        <boxGeometry args={[xGap, LINE_WIDTH, 0]} />
+        {/* <meshBasicMaterial
           transparent
-          depthTest={false}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
+          opacity={0.4}
+        /> */}
+
+        <shaderMaterial
+          vertexShader={iMeshCircuitLinesVert}
+          fragmentShader={iMeshCircuitLinesFrag}
         />
       </instancedMesh>
     </>
