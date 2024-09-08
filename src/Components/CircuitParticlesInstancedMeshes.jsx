@@ -17,7 +17,6 @@ import { degToRad } from 'three/src/math/MathUtils.js'
 
 import iMeshCircuitLinesFrag from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesFragment.glsl'
 import iMeshCircuitLinesVert from '../shaders/iMeshCircuitLineShaders/iMeshCircuitLinesVertex.glsl'
-import { optimizedVerticesV3 } from '../optimizedCircuitVerticesV3'
 
 const heightSegments = 64
 const widthSegments = 64
@@ -45,6 +44,13 @@ const CircuitParticlesInstancedMeshes = () => {
 
   let iMeshRef = useRef(null)
 
+  const iMeshUniforms = useMemo(() => {
+    return {
+      uTime: { value: 0 },
+    }
+  }, [])
+
+  // shift this to blender maybe
   function consolidateLines(points) {
     const lines = []
 
@@ -77,28 +83,9 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     const startTime = performance.now() // Start timing
 
-    console.log(optimizedVerticesV3)
-    console.log(circuitVertices)
-
-    let oldStructureVertices = optimizedVerticesV3.map((pathArray) => {
-      let tempArray1 = pathArray.map((coord) => {
-        return { x: coord[0], y: coord[1] }
-      })
-
-      return tempArray1
-    })
-
-    console.log(oldStructureVertices)
-
     let trueLinesCount = 0
 
-    // circuitVertices.forEach((pathArray) => {
-    //   let lines = consolidateLines(pathArray)
-    //   trueLinesCount += lines.length
-    //   trueLinePointsArray.current.push(lines)
-    // })
-
-    oldStructureVertices.forEach((pathArray) => {
+    circuitVertices.forEach((pathArray) => {
       let lines = consolidateLines(pathArray)
       trueLinesCount += lines.length
       trueLinePointsArray.current.push(lines)
@@ -115,10 +102,10 @@ const CircuitParticlesInstancedMeshes = () => {
   useEffect(() => {
     if (!iMeshCount) return
 
-    let tempFloat32Array = new Float32Array(iMeshCount * 3)
+    let posFloat32Array = new Float32Array(iMeshCount * 3)
 
     for (let i = 0; i < iMeshCount; i++) {
-      tempFloat32Array.set(
+      posFloat32Array.set(
         [Math.random() * 2 - 1, Math.random() - 0.5, 0],
         i * 3
       )
@@ -126,8 +113,10 @@ const CircuitParticlesInstancedMeshes = () => {
 
     iMeshRef.current.geometry.setAttribute(
       'pos',
-      new THREE.InstancedBufferAttribute(tempFloat32Array, 3)
+      new THREE.InstancedBufferAttribute(posFloat32Array, 3)
     )
+
+    let pulseOnArray = new Uint8Array(iMeshCount)
 
     let iMeshIndex = 0
 
@@ -138,6 +127,12 @@ const CircuitParticlesInstancedMeshes = () => {
 
         if (start.y === end.y) {
           let scaleFactor = (end.x - start.x) / xGap
+
+          if (Math.random() * Math.abs(scaleFactor) > 0) {
+            pulseOnArray[iMeshIndex] = 1
+          } else {
+            pulseOnArray[iMeshIndex] = 0
+          }
 
           dummyObj3D.position.set(
             start.x +
@@ -153,6 +148,12 @@ const CircuitParticlesInstancedMeshes = () => {
           iMeshRef.current.setMatrixAt(iMeshIndex, dummyObj3D.matrix)
         } else if (start.x === end.x) {
           let scaleFactor = (end.y - start.y) / xGap
+
+          if (Math.random() * Math.abs(scaleFactor) > 0) {
+            pulseOnArray[iMeshIndex] = 1
+          } else {
+            pulseOnArray[iMeshIndex] = 0
+          }
 
           dummyObj3D.position.set(
             start.x,
@@ -172,7 +173,36 @@ const CircuitParticlesInstancedMeshes = () => {
     })
 
     iMeshRef.current.instanceMatrix.needsUpdate = true
+
+    iMeshRef.current.geometry.setAttribute(
+      'aIsPulseOn',
+      new THREE.InstancedBufferAttribute(pulseOnArray, 1)
+    )
+
+    let offsetFloat32Array = new Float32Array(iMeshCount * 3)
+    for (let i = 0; i < iMeshCount; i++) {
+      offsetFloat32Array[i] = Math.random()
+    }
+    iMeshRef.current.geometry.setAttribute(
+      'aPulseOffset',
+      new THREE.InstancedBufferAttribute(offsetFloat32Array, 1)
+    )
+
+    let pulseDirection = new Uint8Array(iMeshCount)
+    for (let i = 0; i < iMeshCount; i++) {
+      pulseDirection[i] = Math.random() > 0.5 ? 1 : 0
+    }
+    iMeshRef.current.geometry.setAttribute(
+      'aPulseDirection',
+      new THREE.InstancedBufferAttribute(pulseDirection, 1)
+    )
+
+    console.log(iMeshRef.current.geometry.attributes)
   }, [iMeshCount])
+
+  useFrame(({ clock }) => {
+    iMeshRef.current.material.uniforms.uTime.value = clock.getElapsedTime()
+  })
 
   return (
     <>
@@ -203,6 +233,9 @@ const CircuitParticlesInstancedMeshes = () => {
         <shaderMaterial
           vertexShader={iMeshCircuitLinesVert}
           fragmentShader={iMeshCircuitLinesFrag}
+          uniforms={iMeshUniforms}
+          depthTest={false}
+          depthWrite={false}
         />
       </instancedMesh>
     </>

@@ -83,5 +83,6 @@ void main() {
     // float final = beam;
 
     // gl_FragColor = vec4(d1 * smoothedEnds, 0.0, 0.3, 1.0);
-    gl_FragColor = vec4(1.0, 1.0, 1.0, final);
+    // gl_FragColor = vec4(1.0, 1.0, 1.0, final);
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 0.0);
 }

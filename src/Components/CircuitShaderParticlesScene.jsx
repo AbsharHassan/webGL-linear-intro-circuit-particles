@@ -195,7 +195,7 @@ const CircuitShaderParticlesScene = () => {
     let count = 467 * (POINTS_PER_PATH + 1)
     let opacityArray = new Float32Array(count)
     for (let i = 0; i < opacityArray.length; i++) {
-      opacityArray[i] = (Math.random() + 0.2) / 20
+      // opacityArray[i] = (Math.random() + 0.2) / 20
     }
     iMeshRef.current.geometry.setAttribute(
       'aOpacity',
@@ -313,11 +313,11 @@ const CircuitShaderParticlesScene = () => {
       </Plane>
 
       <Plane
-        visible={false}
+        // visible={false}
         ref={testPlaneRef}
-        position={[0, 0, 0]}
-        // args={[viewport.width - 0.2, 0.25]}
-        args={[viewport.width, viewport.height]}
+        position={[0, 0, 0.1]}
+        args={[viewport.width - 0.25, 0.25]}
+        // args={[viewport.width, viewport.height]}
       >
         <shaderMaterial
           vertexShader={circuitLinesVertex}
